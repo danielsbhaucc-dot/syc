@@ -2,11 +2,11 @@
 
 import { useParams } from 'next/navigation';
 import { useFirestore, useDoc, useMemoFirebase, useUser, useCollection } from '@/firebase';
-import { doc, DocumentData, collection, addDoc, updateDoc, query, where } from 'firebase/firestore';
+import { doc, DocumentData, collection, addDoc, updateDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, MapPin, ShieldAlert, PlusCircle, Loader, ArrowRight, FileText, UserCheck, UserPlus, FileWarning } from 'lucide-react';
-import { useState } from 'react';
+import { Users, MapPin, ShieldAlert, PlusCircle, Loader, ArrowRight, FileText, UserPlus, FileWarning } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -23,20 +23,153 @@ interface Battalion {
     templateId?: string;
 }
 
+interface Company {
+    id: string;
+    name: string;
+}
+
 interface Template {
     id: string;
     name: string;
 }
 
-interface Role {
-  id: string;
-  name: string;
+function AddCompanyDialog({ brigadeId, battalionId }: { brigadeId: string; battalionId: string }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name) {
+      toast({ variant: "destructive", title: "שגיאה", description: "יש למלא שם פלוגה." });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const companiesCollection = collection(firestore, 'brigades', brigadeId, 'battalions', battalionId, 'companies');
+      await addDoc(companiesCollection, {
+        name,
+        battalionId,
+        brigadeId,
+      });
+      toast({ title: "הצלחה", description: "הפלוגה נוספה בהצלחה." });
+      setName("");
+      setOpen(false);
+    } catch (error) {
+      console.error("Error adding company:", error);
+      toast({ variant: "destructive", title: "שגיאה", description: "אירעה שגיאה בהוספת הפלוגה." });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusCircle className="ml-2" />
+          הוסף פלוגה
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+        <DialogHeader>
+          <DialogTitle>הוספת פלוגה חדשה</DialogTitle>
+          <DialogDescription>
+            הזן את שם הפלוגה החדשה שברצונך להוסיף לגדוד.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                שם הפלוגה
+              </Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="col-span-3"
+                placeholder="לדוגמה: פלוגת חוד"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? <Loader className="animate-spin ml-2" /> : null}
+              {isSubmitting ? 'מוסיף...' : 'הוסף פלוגה'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
-interface Personnel {
-    id: string;
-    name: string;
-    roleId: string;
+
+function CompaniesList({ brigadeId, battalionId }: { brigadeId: string; battalionId: string }) {
+    const firestore = useFirestore();
+    const companiesQuery = useMemoFirebase(() => {
+        if (!firestore || !brigadeId || !battalionId) return null;
+        return collection(firestore, 'brigades', brigadeId, 'battalions', battalionId, 'companies');
+    }, [firestore, brigadeId, battalionId]);
+
+    const { data: companies, isLoading, error } = useCollection<Company>(companiesQuery);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center text-muted-foreground p-12">
+                <Loader className="mr-2 h-5 w-5 animate-spin" />
+                טוען פלוגות...
+            </div>
+        );
+    }
+    
+    if (error) {
+        return <div className="text-red-500 text-center p-4">שגיאה בטעינת הפלוגות: {error.message}</div>;
+    }
+
+    return (
+         <>
+            {companies && companies.length > 0 ? (
+                 <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>שם הפלוגה</TableHead>
+                            <TableHead className="text-right">פעולות</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {companies.map((company) => (
+                            <TableRow key={company.id}>
+                                <TableCell className="font-medium">{company.name}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="ghost" size="sm" asChild>
+                                        <Link href={`/dashboard/battalion/${battalionId}/company/${company.id}`}>
+                                            נהל מחלקות
+                                            <ArrowRight className="mr-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                 </Table>
+            ) : (
+                <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-12 border-2 border-dashed rounded-lg">
+                    <Users className="w-16 h-16 mb-4" />
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                        אין עדיין פלוגות בגדוד
+                    </h3>
+                    <p className="max-w-md mb-6">
+                        התחל על ידי הוספת הפלוגה הראשונה לגדוד.
+                    </p>
+                    <AddCompanyDialog brigadeId={brigadeId} battalionId={battalionId} />
+                </div>
+            )}
+        </>
+    )
 }
 
 function AssignTemplateCard({ brigadeId, battalionId, currentTemplateId }: { brigadeId: string, battalionId: string, currentTemplateId?: string }) {
@@ -109,79 +242,6 @@ function AssignTemplateCard({ brigadeId, battalionId, currentTemplateId }: { bri
     )
 }
 
-function BattalionStructureView({ brigadeId, battalionId, templateId }: { brigadeId: string, battalionId: string, templateId: string }) {
-    const firestore = useFirestore();
-
-    const rolesQuery = useMemoFirebase(() => {
-        return collection(firestore, 'brigades', brigadeId, 'templates', templateId, 'roles');
-    }, [firestore, brigadeId, templateId]);
-    
-    const personnelQuery = useMemoFirebase(() => {
-        return collection(firestore, 'brigades', brigadeId, 'battalions', battalionId, 'personnel');
-    }, [firestore, brigadeId, battalionId]);
-
-    const { data: roles, isLoading: isLoadingRoles } = useCollection<Role>(rolesQuery);
-    const { data: personnel, isLoading: isLoadingPersonnel } = useCollection<Personnel>(personnelQuery);
-
-    if (isLoadingRoles || isLoadingPersonnel) {
-        return <div>טוען תקן ושיבוצים...</div>;
-    }
-
-    // Map personnel to their roles for quick lookup
-    const personnelByRole = personnel?.reduce((acc, p) => {
-        if (!acc[p.roleId]) {
-            acc[p.roleId] = [];
-        }
-        acc[p.roleId].push(p);
-        return acc;
-    }, {} as Record<string, Personnel[]>);
-
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>תקן כוח אדם ושיבוצים</CardTitle>
-                <CardDescription>
-                    שבץ את אנשי הסגל שלך לתפקידים הנדרשים על פי התקן.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>תפקיד בתקן</TableHead>
-                            <TableHead>איש סגל משובץ</TableHead>
-                            <TableHead className="text-right">פעולות</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {roles?.map((role) => {
-                            const assignedPersonnel = personnelByRole?.[role.id];
-                            return (
-                                <TableRow key={role.id}>
-                                    <TableCell className="font-medium">{role.name}</TableCell>
-                                    <TableCell>
-                                        {assignedPersonnel && assignedPersonnel.length > 0
-                                            ? assignedPersonnel.map(p => p.name).join(', ')
-                                            : <span className="text-yellow-400">לא משובץ</span>
-                                        }
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="sm"><UserCheck className="ml-2"/>שבץ איש סגל</Button>
-                                    </TableCell>
-                                </TableRow>
-                            )
-                        })}
-                    </TableBody>
-                </Table>
-                 <div className="mt-4 flex justify-end">
-                    <Button><UserPlus className="ml-2" />הוסף איש סגל חדש</Button>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
 function BattalionLoading() {
     return (
         <div className="space-y-6" dir="rtl">
@@ -217,27 +277,6 @@ function BattalionLoading() {
         </div>
     )
 }
-
-function NoTemplateAssigned() {
-    return (
-        <Card className="border-yellow-500/50 bg-yellow-500/10">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-yellow-400"><FileWarning /> לא שויכה תבנית</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-yellow-300/80">
-                    כדי להתחיל לנהל את כוח האדם, יש לשייך תבנית תקן לגדוד זה.
-                    <br/>
-                    התבנית מגדירה את רשימת התפקידים הנדרשים בגדוד.
-                </p>
-                 <p className="text-xs text-muted-foreground mt-4">
-                    פעולה זו מתבצעת על ידי מנהל החטיבה.
-                </p>
-            </CardContent>
-        </Card>
-    )
-}
-
 
 export default function BattalionPage() {
   const params = useParams();
@@ -328,13 +367,16 @@ export default function BattalionPage() {
         <AssignTemplateCard brigadeId={brigadeId} battalionId={battalionId} currentTemplateId={battalion.templateId} />
       )}
 
-      {battalion.templateId ? (
-         <BattalionStructureView brigadeId={brigadeId} battalionId={battalionId} templateId={battalion.templateId}/>
-      ) : (
-        <NoTemplateAssigned />
-      )}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>פלוגות הגדוד</CardTitle>
+            <AddCompanyDialog brigadeId={brigadeId} battalionId={battalionId} />
+        </CardHeader>
+        <CardContent>
+            <CompaniesList brigadeId={brigadeId} battalionId={battalionId} />
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
-
-    
