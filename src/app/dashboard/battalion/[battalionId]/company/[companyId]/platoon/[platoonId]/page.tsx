@@ -2,18 +2,19 @@
 
 import { useParams } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, collection, addDoc } from 'firebase/firestore';
+import { doc, collection, addDoc, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ShieldAlert, Users, PlusCircle, Loader, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { SquadCard } from './SquadCard';
+import { PlatoonDashboard } from './PlatoonDashboard';
 
 
 interface Platoon {
@@ -21,10 +22,22 @@ interface Platoon {
   name: string;
 }
 
+export interface Soldier {
+    id: string;
+    name: string;
+    role: string;
+    fireteam: string;
+    positionInTeam?: number;
+    equipment?: string[];
+    gap?: string;
+    squadId: string;
+}
+
 export interface Squad {
     id: string;
     name: string;
     commanderName?: string;
+    soldiers: Soldier[];
 }
 
 function AddSquadDialog({ brigadeId, battalionId, companyId, platoonId }: { brigadeId: string; battalionId: string, companyId: string, platoonId: string }) {
@@ -119,37 +132,72 @@ function AddSquadDialog({ brigadeId, battalionId, companyId, platoonId }: { brig
 }
 
 
-function SquadsList({ brigadeId, battalionId, companyId, platoonId }: { brigadeId: string, battalionId: string, companyId: string, platoonId: string }) {
+function SquadsListContainer({ brigadeId, battalionId, companyId, platoonId }: { brigadeId: string, battalionId: string, companyId: string, platoonId: string }) {
     const firestore = useFirestore();
+    const [allSquadsWithSoldiers, setAllSquadsWithSoldiers] = useState<Squad[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<Error | null>(null);
 
-    const squadsQuery = useMemoFirebase(() => {
+    const platoonRef = useMemoFirebase(() => {
         if (!firestore || !brigadeId || !battalionId || !companyId || !platoonId) return null;
-        return collection(firestore, 'brigades', brigadeId, 'battalions', battalionId, 'companies', companyId, 'platoons', platoonId, 'squads');
+        return doc(firestore, 'brigades', brigadeId, 'battalions', battalionId, 'companies', companyId, 'platoons', platoonId);
     }, [firestore, brigadeId, battalionId, companyId, platoonId]);
+    const { data: platoon } = useDoc<Platoon>(platoonRef);
 
-    const { data: squads, isLoading, error } = useCollection<Squad>(squadsQuery);
+    useEffect(() => {
+        if (!firestore || !platoonId) return;
 
-    if (isLoading) {
-        return (
-             <div className="flex items-center justify-center text-muted-foreground p-12">
-                <Loader className="mr-2 h-5 w-5 animate-spin" />
-                טוען כיתות...
-            </div>
-        )
-    }
+        const fetchSquadsAndSoldiers = async () => {
+            setIsLoading(true);
+            try {
+                const squadsCollection = collection(firestore, 'brigades', brigadeId, 'battalions', battalionId, 'companies', companyId, 'platoons', platoonId, 'squads');
+                const squadSnapshot = await getDocs(squadsCollection);
+                const squads = squadSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Omit<Squad, 'soldiers'>[];
 
+                const allSoldiers: Soldier[] = [];
+                for (const squad of squads) {
+                    const soldiersCollection = collection(squadsCollection, squad.id, 'soldiers');
+                    const soldierSnapshot = await getDocs(soldiersCollection);
+                    const squadSoldiers = soldierSnapshot.docs.map(doc => ({ id: doc.id, squadId: squad.id, ...doc.data() } as Soldier));
+                    allSoldiers.push(...squadSoldiers);
+                }
+
+                const squadsWithSoldiers = squads.map(squad => ({
+                    ...squad,
+                    soldiers: allSoldiers.filter(soldier => soldier.squadId === squad.id)
+                }));
+                
+                setAllSquadsWithSoldiers(squadsWithSoldiers);
+
+            } catch (e: any) {
+                setError(e);
+                console.error(e);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSquadsAndSoldiers();
+    }, [firestore, brigadeId, battalionId, companyId, platoonId]);
+    
     if (error) {
-        return <div className="text-red-500 text-center p-4">שגיאה בטעינת הכיתות: {error.message}</div>
+        return <div className="text-red-500 text-center p-4">שגיאה בטעינת הכיתות והחיילים: {error.message}</div>
     }
+
+    const allSoldiers = allSquadsWithSoldiers.flatMap(s => s.soldiers);
 
     return (
-        <div className="space-y-8">
-            {squads && squads.length > 0 ? (
-                squads.map((squad) => (
-                    <SquadCard key={squad.id} squad={squad} pathParams={{brigadeId, battalionId, companyId, platoonId}} />
-                ))
+        <>
+            {allSquadsWithSoldiers.length > 0 ? (
+                <PlatoonDashboard
+                    platoonName={platoon?.name || ''}
+                    squads={allSquadsWithSoldiers}
+                    soldiers={allSoldiers}
+                    pathParams={{ brigadeId, battalionId, companyId, platoonId }}
+                    isLoading={isLoading}
+                />
             ) : (
-                <Card>
+                 <Card>
                     <CardHeader>
                         <CardTitle>ניהול כיתות</CardTitle>
                     </CardHeader>
@@ -167,7 +215,7 @@ function SquadsList({ brigadeId, battalionId, companyId, platoonId }: { brigadeI
                     </CardContent>
                 </Card>
             )}
-        </div>
+        </>
     )
 }
 
@@ -194,7 +242,6 @@ function PlatoonLoading() {
 
 export default function PlatoonPage() {
   const params = useParams();
-  const firestore = useFirestore();
   const { user } = useUser();
 
   const battalionId = params.battalionId as string;
@@ -202,35 +249,14 @@ export default function PlatoonPage() {
   const platoonId = params.platoonId as string;
   const brigadeId = user?.uid;
 
-  const platoonRef = useMemoFirebase(() => {
-    if (!firestore || !brigadeId || !battalionId || !companyId || !platoonId) return null;
-    return doc(firestore, 'brigades', brigadeId, 'battalions', battalionId, 'companies', companyId, 'platoons', platoonId);
-  }, [firestore, brigadeId, battalionId, companyId, platoonId]);
-
-  const { data: platoon, isLoading, error } = useDoc<Platoon>(platoonRef);
-
-  if (isLoading || !platoon || !brigadeId) {
+  if (!brigadeId) {
     return <PlatoonLoading />;
-  }
-
-  if (error) {
-    return (
-      <div className="text-red-500 text-center" dir="rtl">
-        <ShieldAlert className="mx-auto h-12 w-12 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">אירעה שגיאה</h2>
-        <p>לא ניתן היה לטעון את נתוני המחלקה.</p>
-        <p className="text-sm mt-2">{error.message}</p>
-      </div>
-    );
   }
 
   return (
     <div className="space-y-8 w-full" dir="rtl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-headline text-4xl font-bold tracking-tighter">
-            מחלקה: {platoon.name}
-          </h1>
           <Link href={`/dashboard/battalion/${battalionId}/company/${companyId}`} className="text-sm text-blue-400 hover:underline">
             <div className='flex items-center'>
              <ArrowRight className="ml-1 h-3 w-3" />
@@ -241,7 +267,7 @@ export default function PlatoonPage() {
         <AddSquadDialog brigadeId={brigadeId} battalionId={battalionId} companyId={companyId} platoonId={platoonId} />
       </div>
       
-      <SquadsList brigadeId={brigadeId} battalionId={battalionId} companyId={companyId} platoonId={platoonId} />
+      <SquadsListContainer brigadeId={brigadeId} battalionId={battalionId} companyId={companyId} platoonId={platoonId} />
     </div>
   );
 }

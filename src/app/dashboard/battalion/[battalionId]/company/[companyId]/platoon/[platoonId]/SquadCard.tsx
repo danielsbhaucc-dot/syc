@@ -37,6 +37,7 @@ const fireteamColors: { [key: string]: string } = {
     ratak: 'bg-green-900/50 text-green-300 border-green-700',
     cmd: 'bg-slate-700/50 text-slate-300 border-slate-600',
     hq: 'bg-orange-900/50 text-orange-300 border-orange-700',
+    sabotage: 'bg-orange-900/50 text-orange-300 border-orange-700',
     default: 'bg-gray-700/50 text-gray-300 border-gray-600',
 };
 
@@ -179,18 +180,10 @@ function AddSoldierDialog({ squadId, pathParams, existingFireteams }: { squadId:
 
 
 export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: PathParams }) {
-    const firestore = useFirestore();
-
-    const soldiersQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return collection(firestore, 'brigades', pathParams.brigadeId, 'battalions', pathParams.battalionId, 'companies', pathParams.companyId, 'platoons', pathParams.platoonId, 'squads', squad.id, 'soldiers');
-    }, [firestore, pathParams, squad.id]);
-
-    const { data: soldiers, isLoading, error } = useCollection<Soldier>(soldiersQuery);
 
     const fireteams = React.useMemo(() => {
-        if (!soldiers) return {};
-        return soldiers.reduce((acc, soldier) => {
+        if (!squad.soldiers) return {};
+        return squad.soldiers.reduce((acc, soldier) => {
             const team = soldier.fireteam || 'ללא שיוך';
             if (!acc[team]) {
                 acc[team] = [];
@@ -198,7 +191,7 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
             acc[team].push(soldier);
             return acc;
         }, {} as Record<string, Soldier[]>);
-    }, [soldiers]);
+    }, [squad.soldiers]);
 
     const existingFireteamNames = Object.keys(fireteams);
     
@@ -219,10 +212,9 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
                 <AddSoldierDialog squadId={squad.id} pathParams={pathParams} existingFireteams={existingFireteamNames} />
             </div>
 
-            {isLoading && <div><Loader className="mx-auto animate-spin" /></div>}
-            {error && <div className="text-red-500 text-center">שגיאה בטעינת חיילים: {error.message}</div>}
-
-            {soldiers && soldiers.length === 0 && !isLoading && (
+            {!squad.soldiers && <div><Loader className="mx-auto animate-spin" /></div>}
+            
+            {squad.soldiers && squad.soldiers.length === 0 && (
                  <div className="text-center py-10 text-muted-foreground">
                     <h3 className="text-lg font-medium">אין חיילים בכיתה זו</h3>
                     <p className="mt-1 text-sm">התחל על ידי הוספת החייל הראשון לכיתה.</p>
