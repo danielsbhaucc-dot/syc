@@ -6,7 +6,7 @@ import { doc, collection, addDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, Shield, ShieldAlert, PlusCircle, Loader, ArrowUpRight } from 'lucide-react';
+import { Users, Shield, ShieldAlert, PlusCircle, Loader, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -141,7 +141,7 @@ function PlatoonsList({ brigadeId, battalionId, companyId }: { brigadeId: string
                                      <Button variant="ghost" size="sm" asChild>
                                         <Link href={`/dashboard/battalion/${battalionId}/company/${companyId}/platoon/${platoon.id}`}>
                                             ניהול כיתות
-                                            <ArrowUpRight className="mr-2 h-4 w-4" />
+                                            <ArrowRight className="mr-2 h-4 w-4" />
                                         </Link>
                                     </Button>
                                 </TableCell>
@@ -233,14 +233,17 @@ export default function CompanyPage() {
   }
 
   return (
-    <div className="space-y-8" dir="rtl">
+    <div className="space-y-8 w-full" dir="rtl">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-headline text-4xl font-bold tracking-tighter">
             פלוגה: {company.name}
           </h1>
           <Link href={`/dashboard/battalion/${battalionId}`} className="text-sm text-blue-400 hover:underline">
-            חזרה לגדוד
+             <div className='flex items-center'>
+                <ArrowRight className="ml-1 h-3 w-3" />
+                חזרה לגדוד
+             </div>
           </Link>
         </div>
       </div>

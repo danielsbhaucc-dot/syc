@@ -5,10 +5,10 @@ import { useFirestore, useDoc, useMemoFirebase, useUser, useCollection } from '@
 import { doc, DocumentData, collection, addDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, MapPin, ShieldAlert, PlusCircle, Loader, ArrowUpRight } from 'lucide-react';
+import { Users, MapPin, ShieldAlert, PlusCircle, Loader, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/componentsui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -178,7 +178,7 @@ function CompaniesList({ brigadeId, battalionId }: { brigadeId: string, battalio
                                      <Button variant="ghost" size="sm" asChild>
                                         <Link href={`/dashboard/battalion/${battalionId}/company/${company.id}`}>
                                             ניהול מחלקות
-                                            <ArrowUpRight className="mr-2 h-4 w-4" />
+                                            <ArrowRight className="mr-2 h-4 w-4" />
                                         </Link>
                                     </Button>
                                 </TableCell>
@@ -234,9 +234,9 @@ export default function BattalionPage() {
   }
 
   return (
-    <div className="space-y-8" dir="rtl">
+    <div className="space-y-8 w-full" dir="rtl">
       <h1 className="font-headline text-4xl font-bold tracking-tighter">
-        דף גדוד: {battalion.name}
+        גדוד: {battalion.name}
       </h1>
 
       <Card>

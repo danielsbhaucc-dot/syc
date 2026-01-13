@@ -35,7 +35,7 @@ import {
   ShieldAlert,
   ShieldX,
   Package,
-  ArrowUpRight,
+  ArrowRight,
   Loader,
   PlusCircle,
 } from "lucide-react";
@@ -260,12 +260,11 @@ export default function DashboardPage() {
   ).length;
 
   return (
-    <div className="space-y-8" dir="rtl">
+    <div className="space-y-8 w-full" dir="rtl">
       <div className="flex items-center justify-between">
         <h1 className="font-headline text-3xl font-semibold">
           לוח מחוונים חטיבתי
         </h1>
-        <Button>צפה בדוח המלא</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -381,7 +380,7 @@ export default function DashboardPage() {
                     <Button variant="ghost" size="sm" asChild>
                       <Link href={`/dashboard/battalion/${unit.id}`}>
                         פרטים
-                        <ArrowUpRight className="mr-2 h-4 w-4" />
+                        <ArrowRight className="mr-2 h-4 w-4" />
                       </Link>
                     </Button>
                   </TableCell>
