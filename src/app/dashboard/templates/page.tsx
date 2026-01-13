@@ -15,10 +15,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { LayoutTemplate, PlusCircle, Loader, FileText } from 'lucide-react';
+import { LayoutTemplate, PlusCircle, Loader, FileText, ArrowRight } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 interface Template {
   id: string;
@@ -99,7 +100,7 @@ function AddTemplateDialog({ brigadeId }: { brigadeId: string }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="col-span-3"
-                placeholder="לדוגמה: תקן גדוד חי'ר"
+                placeholder='לדוגמה: תקן גדוד חי"ר'
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -166,7 +167,12 @@ function TemplatesList({ brigadeId }: { brigadeId: string }) {
                             <p className="text-muted-foreground">{template.description || 'אין תיאור לתבנית זו.'}</p>
                         </CardContent>
                         <CardContent>
-                             <Button variant="outline" className="w-full">ערוך תבנית</Button>
+                             <Button variant="outline" className="w-full" asChild>
+                               <Link href={`/dashboard/templates/${template.id}`}>
+                                  ערוך תבנית
+                                  <ArrowRight className="mr-2 h-4 w-4" />
+                                </Link>
+                              </Button>
                         </CardContent>
                     </Card>
                 ))}
