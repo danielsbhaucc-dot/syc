@@ -7,33 +7,32 @@ import * as admin from 'firebase-admin';
 require('dotenv').config({ path: '.env.local' });
 
 // Helper function to initialize Firebase Admin SDK safely
+// This ensures it's initialized only once
 function initializeFirebaseAdmin() {
     if (admin.apps.length > 0) {
         return admin.app();
     }
     
-    // Check if the service account key is available in environment variables
-    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-        console.error('Firebase Admin Initialization Error: FIREBASE_SERVICE_ACCOUNT_KEY is not set in .env.local');
-        // Do not throw an error here, let the POST handler manage the response
+    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+
+    if (!serviceAccountKey) {
+        console.error('Firebase Admin Initialization Error: FIREBASE_SERVICE_ACCOUNT_KEY is not set in the environment variables. Make sure it is present in a .env.local file.');
         return null;
     }
 
     try {
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
+        const serviceAccount = JSON.parse(serviceAccountKey);
         return admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         });
     } catch (error) {
-        console.error('Firebase Admin Initialization Error:', error);
-        // Do not throw an error here
+        console.error('Firebase Admin Initialization Error: Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY. Make sure it is a valid JSON string.', error);
         return null;
     }
 }
 
 // Initialize admin outside of the request handler to ensure it's done only once.
 const adminApp = initializeFirebaseAdmin();
-
 
 export async function POST(req: NextRequest) {
     if (!adminApp) {
