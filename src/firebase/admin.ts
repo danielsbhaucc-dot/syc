@@ -1,11 +1,10 @@
+'use server';
 import * as admin from 'firebase-admin';
 
 let adminAuth: admin.auth.Auth | null = null;
 let adminFirestore: admin.firestore.Firestore | null = null;
 
 try {
-  // Directly embedding the service account key as a string.
-  // This avoids issues with environment variable parsing in some environments.
   const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
   if (!serviceAccountString) {
@@ -13,8 +12,9 @@ try {
   }
 
   if (admin.apps.length === 0) {
-    // Parse the JSON string to get the service account object
-    const serviceAccount = JSON.parse(serviceAccountString);
+    // The service account key from the environment variable might have escaped newlines.
+    // We need to replace them with actual newline characters for JSON.parse to work correctly.
+    const serviceAccount = JSON.parse(serviceAccountString.replace(/\\n/g, '\n'));
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
