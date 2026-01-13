@@ -54,62 +54,62 @@ export default function DashboardPage() {
   ).length;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" dir="rtl">
       <div className="flex items-center justify-between">
         <h1 className="font-headline text-3xl font-semibold">
-          Brigade Dashboard
+          לוח מחוונים חטיבתי
         </h1>
-        <Button>View Full Report</Button>
+        <Button>צפה בדוח המלא</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Overall Readiness
+              מוכנות כללית
             </CardTitle>
             <ShieldCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{overallReadiness.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">
-              Across all battalions
+              כלל הגדודים
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Personnel</CardTitle>
+            <CardTitle className="text-sm font-medium">סך כל כוח אדם</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalPersonnel}</div>
             <p className="text-xs text-muted-foreground">
-              Assigned across brigade
+              משובצים בכלל החטיבה
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Equipment</CardTitle>
+            <CardTitle className="text-sm font-medium">סך כל ציוד</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalEquipment.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              On-hand items
+              פריטים במלאי
             </p>
           </CardContent>
         </Card>
         <Card className="border-red-500/50 bg-red-500/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Alerts</CardTitle>
+            <CardTitle className="text-sm font-medium">התראות קריטיות</CardTitle>
             <ShieldAlert className="h-4 w-4 text-red-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-400">{criticalAlerts}</div>
             <p className="text-xs text-red-400/80">
-              Units requiring immediate attention
+              יחידות הדורשות התייחסות מיידית
             </p>
           </CardContent>
         </Card>
@@ -117,19 +117,19 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Battalion Status Overview</CardTitle>
+          <CardTitle>סקירת סטטוס גדודים</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[200px]">Unit</TableHead>
-                <TableHead>Commander</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Personnel (Assigned/Auth.)</TableHead>
-                <TableHead>Equipment (On-Hand/Auth.)</TableHead>
-                <TableHead className="w-[150px]">Readiness</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[200px]">יחידה</TableHead>
+                <TableHead>מפקד</TableHead>
+                <TableHead>סטטוס</TableHead>
+                <TableHead>כוח אדם (משובץ/תקן)</TableHead>
+                <TableHead>ציוד (במלאי/תקן)</TableHead>
+                <TableHead className="w-[150px]">מוכנות</TableHead>
+                <TableHead className="text-right">פעולות</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -143,7 +143,7 @@ export default function DashboardPage() {
                       className={`gap-2 ${statusColors[unit.status]}`}
                     >
                       {statusIcons[unit.status]}
-                      {unit.status}
+                      {unit.status === 'Nominal' ? 'תקין' : unit.status === 'Warning' ? 'אזהרה' : 'קריטי'}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -162,8 +162,8 @@ export default function DashboardPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm">
-                      Details
-                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                      פרטים
+                      <ArrowUpRight className="mr-2 h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>

@@ -19,8 +19,8 @@ export interface Unit {
 export const mockUnits: Unit[] = [
   {
     id: "1-501-pir",
-    name: "1-501st PIR",
-    commander: "LTC Rogers",
+    name: "גדוד 501",
+    commander: "סא\"ל רוג'רס",
     status: "Nominal",
     personnel: {
       authorized: 650,
@@ -34,8 +34,8 @@ export const mockUnits: Unit[] = [
   },
   {
     id: "3-509-pir",
-    name: "3-509th PIR",
-    commander: "LTC Smith",
+    name: "גדוד 509",
+    commander: "סא\"ל סמית'",
     status: "Warning",
     personnel: {
       authorized: 650,
@@ -49,8 +49,8 @@ export const mockUnits: Unit[] = [
   },
   {
     id: "1-40-cav",
-    name: "1-40th CAV",
-    commander: "LTC Jones",
+    name: "סיירת 40",
+    commander: "סא\"ל ג'ונס",
     status: "Nominal",
     personnel: {
       authorized: 450,
@@ -64,8 +64,8 @@ export const mockUnits: Unit[] = [
   },
   {
     id: "725-bsb",
-    name: "725th BSB",
-    commander: "LTC Williams",
+    name: "גדוד 725",
+    commander: "סא\"ל ויליאמס",
     status: "Critical",
     personnel: {
       authorized: 500,
@@ -79,8 +79,8 @@ export const mockUnits: Unit[] = [
   },
   {
     id: "2-377-pfar",
-    name: "2-377th PFAR",
-    commander: "LTC Brown",
+    name: "גדוד 377",
+    commander: "סא\"ל בראון",
     status: "Warning",
     personnel: {
       authorized: 550,

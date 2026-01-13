@@ -36,7 +36,7 @@ export default function DashboardLayout({
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <Logo className="size-7 shrink-0 text-primary" />
-            <span className="font-headline text-lg">TroopSync</span>
+            <span className="font-headline text-lg">מערכת שליטה</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -45,35 +45,35 @@ export default function DashboardLayout({
               <SidebarMenuButton
                 asChild
                 isActive
-                tooltip={{ children: "Dashboard" }}
+                tooltip={{ children: "לוח מחוונים" }}
               >
                 <Link href="/dashboard">
                   <Home />
-                  <span>Dashboard</span>
+                  <span>לוח מחוונים</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "Templates" }}>
+              <SidebarMenuButton asChild tooltip={{ children: "תבניות" }}>
                 <Link href="/dashboard/templates">
                   <LayoutTemplate />
-                  <span>Templates</span>
+                  <span>תבניות</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "Reporting" }}>
+              <SidebarMenuButton asChild tooltip={{ children: "דיווח" }}>
                 <Link href="/dashboard/reporting">
                   <FileText />
-                  <span>Reporting</span>
+                  <span>דיווח</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "Reports" }}>
+              <SidebarMenuButton asChild tooltip={{ children: "דוחות" }}>
                 <Link href="/dashboard/reports">
                   <FileOutput />
-                  <span>Reports</span>
+                  <span>דוחות</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -88,8 +88,8 @@ export default function DashboardLayout({
                 <AvatarFallback>BR</AvatarFallback>
               </Avatar>
               <div className="flex flex-col truncate">
-                <span className="text-sm font-medium">Brigade Staff</span>
-                <span className="text-xs text-muted-foreground">4th IBCT (AIRBORNE)</span>
+                <span className="text-sm font-medium">מטה חטיבה</span>
+                <span className="text-xs text-muted-foreground">חטיבה 4 (מיל׳)</span>
               </div>
             </div>
             <button>

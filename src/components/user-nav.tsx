@@ -28,10 +28,10 @@ export function UserNav() {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-56" align="end" forceMount dir="rtl">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Brigade Staff</p>
+            <p className="text-sm font-medium leading-none">מטה חטיבה</p>
             <p className="text-xs leading-none text-muted-foreground">
               brigade.staff@example.com
             </p>
@@ -40,19 +40,19 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+            <User className="ml-2 h-4 w-4" />
+            <span>פרופיל</span>
           </DropdownMenuItem>
           <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
+            <Settings className="ml-2 h-4 w-4" />
+            <span>הגדרות</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/login">
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
+            <LogOut className="ml-2 h-4 w-4" />
+            <span>התנתק</span>
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
