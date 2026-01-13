@@ -146,7 +146,7 @@ function AddSoldierDialog({ squadId, pathParams, existingFireteams }: { squadId:
                          <SelectItem value="חוליה 1 - חוד">חוליה 1 - חוד</SelectItem>
                          <SelectItem value="חוליה 2 - רתק">חוליה 2 - רתק</SelectItem>
                          <SelectItem value="חוליה 3 - פיקוד וסגירה">חוליה 3 - פיקוד וסגירה</SelectItem>
-                         <SelectItem value="חפ&quot;ק">חפ"ק</SelectItem>
+                         <SelectItem value='חפ"ק'>חפ"ק</SelectItem>
                          <SelectItem value="חוליית חבלה">חוליית חבלה</SelectItem>
                     </SelectContent>
                 </Select>

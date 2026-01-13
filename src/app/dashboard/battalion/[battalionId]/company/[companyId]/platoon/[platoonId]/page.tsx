@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, collection, addDoc, getDocs } from 'firebase/firestore';
+import { doc, collection, addDoc, getDocs, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ShieldAlert, Users, PlusCircle, Loader, ArrowRight } from 'lucide-react';
@@ -103,7 +103,7 @@ function AddSquadDialog({ brigadeId, battalionId, companyId, platoonId }: { brig
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="col-span-3"
-                placeholder='לדוגמה: כיתה א&apos;'
+                placeholder='לדוגמה: כיתה א'
               />
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
@@ -154,12 +154,19 @@ function SquadsListContainer({ brigadeId, battalionId, companyId, platoonId }: {
                 const squads = squadSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Omit<Squad, 'soldiers'>[];
 
                 const allSoldiers: Soldier[] = [];
-                for (const squad of squads) {
+                const soldierPromises = squads.map(squad => {
                     const soldiersCollection = collection(squadsCollection, squad.id, 'soldiers');
-                    const soldierSnapshot = await getDocs(soldiersCollection);
-                    const squadSoldiers = soldierSnapshot.docs.map(doc => ({ id: doc.id, squadId: squad.id, ...doc.data() } as Soldier));
+                    return getDocs(soldiersCollection);
+                });
+
+                const soldierSnapshots = await Promise.all(soldierPromises);
+
+                soldierSnapshots.forEach((soldierSnapshot, index) => {
+                    const squadId = squads[index].id;
+                    const squadSoldiers = soldierSnapshot.docs.map(doc => ({ id: doc.id, squadId, ...doc.data() } as Soldier));
                     allSoldiers.push(...squadSoldiers);
-                }
+                });
+
 
                 const squadsWithSoldiers = squads.map(squad => ({
                     ...squad,
@@ -187,7 +194,7 @@ function SquadsListContainer({ brigadeId, battalionId, companyId, platoonId }: {
 
     return (
         <>
-            {allSquadsWithSoldiers.length > 0 ? (
+            {(isLoading || allSquadsWithSoldiers.length > 0) ? (
                 <PlatoonDashboard
                     platoonName={platoon?.name || ''}
                     squads={allSquadsWithSoldiers}
