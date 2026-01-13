@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useFirestore, useDoc, useMemoFirebase, useFirebase, useCollection } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser, useCollection } from '@/firebase';
 import { doc, DocumentData, collection, addDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -176,8 +176,7 @@ function CompaniesList({ brigadeId, battalionId }: { brigadeId: string, battalio
                                 <TableCell className="font-medium">{company.name}</TableCell>
                                 <TableCell className="text-right">
                                      <Button variant="ghost" size="sm" asChild>
-                                        {/* This will eventually link to a company-specific page */}
-                                        <Link href="#">
+                                        <Link href={`/dashboard/battalion/${battalionId}/company/${company.id}`}>
                                             ניהול מחלקות
                                             <ArrowUpRight className="mr-2 h-4 w-4" />
                                         </Link>
@@ -207,7 +206,7 @@ function CompaniesList({ brigadeId, battalionId }: { brigadeId: string, battalio
 export default function BattalionPage() {
   const params = useParams();
   const firestore = useFirestore();
-  const { user } = useFirebase();
+  const { user } = useUser();
 
   const battalionId = params.battalionId as string;
   const brigadeId = user?.uid;
