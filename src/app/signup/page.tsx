@@ -61,7 +61,14 @@ export default function SignupPage() {
 
       // Set the user's display name to the brigade name
       await updateProfile(newUser, { displayName: brigadeName });
-
+      
+      // IMPORTANT: This user is a brigade admin. We need a secure way
+      // to set their custom claim. This should be done via a backend function
+      // triggered on user creation. Since we don't have that yet, the user
+      // won't have the 'brigade' role claim immediately.
+      // For now, we will create the brigade document and add them as a member.
+      // The security rules will grant them access based on this membership.
+      
       // Create a brigade for the new user.
       // The brigade ID will be the user's UID. This user is the admin.
       const brigadeRef = doc(firestore, "brigades", newUser.uid);
@@ -73,9 +80,6 @@ export default function SignupPage() {
           [newUser.uid]: "admin",
         },
       });
-
-      // Store user type in local storage to use it across the app
-      localStorage.setItem('userType', 'brigade');
 
       toast({
         title: "ההרשמה הצליחה!",

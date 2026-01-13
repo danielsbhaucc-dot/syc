@@ -38,9 +38,10 @@ import {
   ArrowRight,
   Loader,
   PlusCircle,
+  UserPlus,
 } from "lucide-react";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query, where, DocumentData, addDoc, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, DocumentData, addDoc, doc, getDocs } from "firebase/firestore";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -76,6 +77,100 @@ const statusColors: Record<Unit['status'], string> = {
   Warning: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
   Critical: "bg-red-500/20 text-red-400 border-red-500/30",
 };
+
+function AddBattalionUserDialog({ brigadeId, battalionId, battalionName }: { brigadeId: string, battalionId: string, battalionName: string }) {
+    const [open, setOpen] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email || !password) {
+            toast({ variant: 'destructive', title: 'שגיאה', description: 'יש למלא אימייל וסיסמה.' });
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            const response = await fetch('/api/create-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, brigadeId, battalionId }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to create user');
+            }
+
+            toast({ title: 'הצלחה', description: `המשתמש נוצר והוקצה לגדוד ${battalionName}` });
+            setEmail('');
+            setPassword('');
+            setOpen(false);
+
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'שגיאה ביצירת משתמש', description: error.message });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                 <Button variant="ghost" size="sm">
+                    <UserPlus className="h-4 w-4" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent dir="rtl">
+                <DialogHeader>
+                    <DialogTitle>הוספת משתמש לגדוד: {battalionName}</DialogTitle>
+                    <DialogDescription>
+                        צור משתמש חדש שיקושר ישירות לגדוד זה. למשתמש זה תהיה גישה לנתוני הגדוד בלבד.
+                    </DialogDescription>
+                </DialogHeader>
+                 <form onSubmit={handleSubmit}>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="email-user" className="text-right">
+                            אימייל
+                        </Label>
+                        <Input
+                            id="email-user"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="col-span-3"
+                            placeholder="user@example.com"
+                        />
+                        </div>
+                         <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="password-user" className="text-right">
+                            סיסמה
+                        </Label>
+                        <Input
+                            id="password-user"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="col-span-3"
+                            placeholder="לפחות 6 תווים"
+                        />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader className="animate-spin ml-2" /> : null}
+                        {isSubmitting ? 'יוצר משתמש...' : 'צור והקצה משתמש'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 
 function DashboardLoading() {
@@ -226,28 +321,23 @@ export default function DashboardPage() {
 
   // The brigadeId is the user's UID.
   const brigadeId = user?.uid;
-  const userType = localStorage.getItem('userType');
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    if (userType === 'battalion' && firestore && user) {
-      // For a battalion user, we need to find which battalion they belong to.
-      // This is a complex query not easily done client-side without knowing the brigade.
-      // A better structure might be a 'users' collection mapping user UIDs to their roles and units.
-      // For now, as a simplification, we assume the first battalion found for the user's brigade is theirs.
-      const findBattalion = async () => {
-        if (!brigadeId) return;
-        const q = query(collection(firestore, 'brigades', brigadeId, 'battalions'), where("brigadeId", "==", brigadeId));
-        const querySnapshot = await getDoc(doc(collection(q)));
-        if (!querySnapshot.empty) {
-          const firstBattalion = querySnapshot.docs[0];
-          router.push(`/dashboard/battalion/${firstBattalion.id}`);
+    const checkUserRole = async () => {
+        if (user) {
+            const tokenResult = await user.getIdTokenResult();
+            const role = tokenResult.claims.role;
+             if (role === 'battalion') {
+                const battalionId = tokenResult.claims.battalionId;
+                router.push(`/dashboard/battalion/${battalionId}`);
+            } else {
+                setUserRole(role || 'brigade');
+            }
         }
-      };
-      // This logic is flawed and will be simplified. 
-      // For the demo, we will just redirect to the reporting page for battalion users.
-      router.push('/dashboard/reporting');
-    }
-  }, [userType, firestore, user, router, brigadeId]);
+    };
+    checkUserRole();
+  }, [user, router]);
 
   const battalionsQuery = useMemoFirebase(() => {
     if (!firestore || !brigadeId) return null;
@@ -259,7 +349,7 @@ export default function DashboardPage() {
 
   const { data: battalions, isLoading, error } = useCollection<Unit>(battalionsQuery);
   
-  if (isLoading || !battalions || userType === 'battalion') {
+  if (isLoading || !battalions || !userRole || userRole === 'battalion') {
     return <DashboardLoading />;
   }
   
@@ -401,7 +491,8 @@ export default function DashboardPage() {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right flex items-center justify-end">
+                    {brigadeId && <AddBattalionUserDialog brigadeId={brigadeId} battalionId={unit.id} battalionName={unit.name} />}
                     <Button variant="ghost" size="sm" asChild>
                       <Link href={`/dashboard/battalion/${unit.id}`}>
                         פרטים
@@ -419,5 +510,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

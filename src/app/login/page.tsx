@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import { useAuth, useUser } from "@/firebase";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, getIdTokenResult } from "firebase/auth";
 import Link from "next/link";
 import { Shield, Users, ArrowRight, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +16,6 @@ import { FirebaseError } from "firebase/app";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // User type selection is removed for now, login will determine role.
   
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -24,9 +23,20 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isUserLoading && user) {
-      // The dashboard page will handle redirection based on user role.
-      router.push("/dashboard");
+    const handleRedirect = async () => {
+        if (user) {
+            const tokenResult = await user.getIdTokenResult(true); // Force refresh
+            const claims = tokenResult.claims;
+
+            if (claims.role === 'battalion' && claims.battalionId) {
+                router.push(`/dashboard/battalion/${claims.battalionId}`);
+            } else {
+                router.push("/dashboard");
+            }
+        }
+    };
+    if (!isUserLoading) {
+      handleRedirect();
     }
   }, [user, isUserLoading, router]);
 
@@ -42,9 +52,7 @@ export default function LoginPage() {
     }
     try {
         await signInWithEmailAndPassword(auth, email, password);
-        // We will determine user type on the dashboard page based on their permissions.
-        // No need to set it in local storage anymore for this simplified flow.
-        router.push("/dashboard");
+        // The useEffect will handle the redirect after state update
     } catch (error) {
         let description = "שם המשתמש או הסיסמה שהזנת אינם נכונים.";
         if (error instanceof FirebaseError) {
