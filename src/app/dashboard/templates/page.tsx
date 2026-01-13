@@ -99,7 +99,7 @@ function AddTemplateDialog({ brigadeId }: { brigadeId: string }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="col-span-3"
-                placeholder="לדוגמה: תקן גדוד חי"ר"
+                placeholder="לדוגמה: תקן גדוד חי'ר"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
