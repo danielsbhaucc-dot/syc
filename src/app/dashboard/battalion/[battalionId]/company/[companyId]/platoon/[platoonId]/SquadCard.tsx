@@ -33,12 +33,13 @@ export interface Soldier {
 }
 
 const fireteamColors: { [key: string]: string } = {
-    chod: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    ratak: 'bg-green-500/20 text-green-400 border-green-500/30',
-    cmd: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
-    hq: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-    default: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+    chod: 'bg-blue-900/50 text-blue-300 border-blue-700',
+    ratak: 'bg-green-900/50 text-green-300 border-green-700',
+    cmd: 'bg-slate-700/50 text-slate-300 border-slate-600',
+    hq: 'bg-orange-900/50 text-orange-300 border-orange-700',
+    default: 'bg-gray-700/50 text-gray-300 border-gray-600',
 };
+
 
 const getFireteamColor = (fireteam: string) => {
     const key = fireteam.toLowerCase();
@@ -209,8 +210,8 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
 
 
     return (
-        <div className="relative mb-10 rounded-2xl border border-border bg-card p-6 pt-10 shadow-lg">
-            <div className="absolute -top-4 right-6 bg-primary text-primary-foreground px-4 py-1 rounded-lg text-lg font-bold shadow-md">
+        <div className="relative mb-10 rounded-2xl border border-slate-700 bg-[#1e293b] p-6 pt-10 shadow-lg">
+            <div className="absolute -top-4 right-6 bg-primary text-primary-foreground px-4 py-1 rounded-lg text-lg font-bold shadow-md border-2 border-[#1e293b]">
                 {squad.name} (מ"כ: {squad.commanderName})
             </div>
 
@@ -233,7 +234,7 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
                  if (teamSoldiers.length === 0) return null;
 
                  return (
-                    <div key={fireteamName} className="flex flex-col gap-4 rounded-lg border border-border bg-background/50 p-4">
+                    <div key={fireteamName} className="flex flex-col gap-4 rounded-lg border border-slate-700 bg-slate-900/50 p-4">
                         <div className={`inline-block self-start text-sm font-bold px-3 py-1 rounded ${getFireteamColor(fireteamName)}`}>
                             {fireteamName}
                         </div>
