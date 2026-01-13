@@ -16,6 +16,7 @@ import { doc, setDoc } from "firebase/firestore";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { FirebaseError } from "firebase/app";
+import { LoadingScreen } from "@/components/loading-screen";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -113,11 +114,7 @@ export default function SignupPage() {
   };
   
   if (isUserLoading || user) {
-    return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center login-bg">
-        <p>טוען...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -136,7 +133,7 @@ export default function SignupPage() {
               <Input
                 id="brigadeName"
                 type="text"
-                placeholder="לדוגמה: חטיבת גולני"
+                placeholder='לדוגמה: חטיבת גולני'
                 required
                 className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 value={brigadeName}

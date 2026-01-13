@@ -27,6 +27,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { LoadingScreen } from "@/components/loading-screen";
 
 export default function DashboardLayout({
   children,
@@ -45,11 +46,7 @@ export default function DashboardLayout({
   const userAvatar = PlaceHolderImages.find((img) => img.id === "user-avatar");
   
   if (isUserLoading || !user) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center">
-        <p>טוען...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (

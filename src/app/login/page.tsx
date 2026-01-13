@@ -12,6 +12,7 @@ import Link from "next/link";
 import { Shield, Users, ArrowRight, UserPlus, Loader } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { FirebaseError } from "firebase/app";
+import { LoadingScreen } from "@/components/loading-screen";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -75,12 +76,7 @@ export default function LoginPage() {
   };
   
   if (isUserLoading || user) {
-    return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center login-bg">
-        <Loader className="animate-spin" />
-        <p className="mt-4">טוען...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
