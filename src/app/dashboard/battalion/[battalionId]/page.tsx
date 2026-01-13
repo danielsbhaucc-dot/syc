@@ -2,10 +2,10 @@
 
 import { useParams } from 'next/navigation';
 import { useFirestore, useDoc, useMemoFirebase, useUser, useCollection } from '@/firebase';
-import { doc, DocumentData, collection, addDoc } from 'firebase/firestore';
+import { doc, DocumentData, collection, addDoc, updateDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, MapPin, ShieldAlert, PlusCircle, Loader, ArrowRight } from 'lucide-react';
+import { Users, MapPin, ShieldAlert, PlusCircle, Loader, ArrowRight, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -14,16 +14,93 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Battalion {
     id: string;
     name: string;
     location: string;
+    templateId?: string;
 }
 
 interface Company {
     id: string;
     name: string;
+}
+
+interface Template {
+    id: string;
+    name: string;
+}
+
+function AssignTemplateCard({ brigadeId, battalionId, currentTemplateId }: { brigadeId: string, battalionId: string, currentTemplateId?: string }) {
+    const firestore = useFirestore();
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(currentTemplateId);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
+
+    const templatesQuery = useMemoFirebase(() => {
+        if (!firestore || !brigadeId) return null;
+        return collection(firestore, 'brigades', brigadeId, 'templates');
+    }, [firestore, brigadeId]);
+
+    const { data: templates, isLoading } = useCollection<Template>(templatesQuery);
+
+    const handleAssign = async () => {
+        if (!selectedTemplateId) {
+            toast({ variant: "destructive", title: "שגיאה", description: "יש לבחור תבנית." });
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            const battalionRef = doc(firestore, 'brigades', brigadeId, 'battalions', battalionId);
+            await updateDoc(battalionRef, { templateId: selectedTemplateId });
+            toast({ title: "הצלחה", description: "התבנית שויכה לגדוד בהצלחה." });
+        } catch (error) {
+            console.error("Error assigning template:", error);
+            toast({ variant: "destructive", title: "שגיאה", description: "אירעה שגיאה בשיוך התבנית." });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    const selectedTemplateName = templates?.find(t => t.id === currentTemplateId)?.name;
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>שיוך תבנית תקן</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {currentTemplateId && (
+                    <div className="text-sm p-3 bg-green-900/50 border border-green-700 rounded-md">
+                        <p className="font-semibold text-green-300">תבנית משויכת כעת: <span className="font-bold">{selectedTemplateName || 'טוען...'}</span></p>
+                    </div>
+                )}
+                <div className="flex items-center gap-4">
+                    <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId} disabled={isLoading}>
+                        <SelectTrigger className="flex-grow">
+                            <SelectValue placeholder={isLoading ? "טוען תבניות..." : "בחר תבנית תקן"} />
+                        </SelectTrigger>
+                        <SelectContent dir="rtl">
+                            {templates?.map((template) => (
+                                <SelectItem key={template.id} value={template.id}>
+                                    {template.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={handleAssign} disabled={isSubmitting || !selectedTemplateId}>
+                        {isSubmitting ? <Loader className="animate-spin ml-2" /> : <FileText />}
+                        {isSubmitting ? "משייך..." : (currentTemplateId ? "שנה שיוך" : "שייך תבנית")}
+                    </Button>
+                </div>
+                 <p className="text-xs text-muted-foreground">
+                    שיוך תבנית יגדיר את תקן כוח האדם והציוד עבור הגדוד. משתמש הגדוד יצטרך למלא את הנתונים בהתאם לתבנית זו.
+                </p>
+            </CardContent>
+        </Card>
+    )
 }
 
 function AddCompanyDialog({ brigadeId, battalionId }: { brigadeId: string; battalionId: string }) {
@@ -270,6 +347,8 @@ export default function BattalionPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AssignTemplateCard brigadeId={brigadeId} battalionId={battalionId} currentTemplateId={battalion.templateId} />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
