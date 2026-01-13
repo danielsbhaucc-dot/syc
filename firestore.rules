@@ -104,14 +104,15 @@ service cloud.firestore {
     /**
      * @description Controls access to Brigade documents, the root of all other data.
      * @path /brigades/{brigadeId}
-     * @allow (get, list) A user who is the owner or a member of the brigade.
+     * @allow (get) A user who is the owner or a member of the brigade.
+     * @allow (list) A user who is a member of the brigade.
      * @allow (create) Any signed-in user creating a brigade and adding themselves as a member.
      * @deny (get) A user trying to read a brigade document they are not a member of.
      * @principle Establishes the "Brigade Membership" model for all nested data.
      */
     match /brigades/{brigadeId} {
       allow get: if isBrigadeOwner(brigadeId) || isBrigadeMember(brigadeId);
-      allow list: if isBrigadeMember(brigadeId); // Careful with allowing list on root collection
+      allow list: if isBrigadeMember(brigadeId); 
       allow create: if isInitialBrigadeCreator();
       allow update, delete: if isExistingBrigadeMember(brigadeId);
     }
@@ -135,6 +136,16 @@ service cloud.firestore {
      */
     match /brigades/{brigadeId}/battalions/{battalionId}/companies/{companyId} {
       allow read, write: if isBrigadeMember(brigadeId);
+    }
+
+    /**
+     * @description Controls access to Platoons within a Company.
+     * @path /brigades/{brigadeId}/battalions/{battalionId}/companies/{companyId}/platoons/{platoonId}
+     * @allow (read, write) Any member of the great-great-grandparent brigade.
+     * @principle Inherits access from the Brigade, ensuring consistent permissions down the hierarchy.
+     */
+    match /brigades/{brigadeId}/battalions/{battalionId}/companies/{companyId}/platoons/{platoonId} {
+        allow read, write: if isBrigadeMember(brigadeId);
     }
 
     /**

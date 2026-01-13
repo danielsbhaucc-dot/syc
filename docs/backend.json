@@ -78,6 +78,31 @@
         "name"
       ]
     },
+    "Platoon": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Platoon",
+      "type": "object",
+      "description": "Represents a platoon within a company.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Platoon entity."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to Company. (Relationship: Company 1:N Platoon)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the platoon."
+        }
+      },
+      "required": [
+        "id",
+        "companyId",
+        "name"
+      ]
+    },
     "Template": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Template",
@@ -289,6 +314,34 @@
         }
       },
       {
+        "path": "/brigades/{brigadeId}/battalions/{battalionId}/companies/{companyId}/platoons/{platoonId}",
+        "definition": {
+          "entityName": "Platoon",
+          "schema": {
+            "$ref": "#/backend/entities/Platoon"
+          },
+          "description": "Represents a platoon within a company. Includes denormalized 'brigadeId', 'battalionId' and 'companyId' for authorization independence.",
+          "params": [
+            {
+              "name": "brigadeId",
+              "description": "The unique identifier for the brigade."
+            },
+            {
+              "name": "battalionId",
+              "description": "The unique identifier for the battalion."
+            },
+            {
+              "name": "companyId",
+              "description": "The unique identifier for the company."
+            },
+            {
+              "name": "platoonId",
+              "description": "The unique identifier for the platoon."
+            }
+          ]
+        }
+      },
+      {
         "path": "/brigades/{brigadeId}/templates/{templateId}",
         "definition": {
           "entityName": "Template",
@@ -384,4 +437,5 @@
     "reasoning": "The Firestore structure is designed to support the TroopSync application's core features, focusing on template management, automated gap analysis, battalion reporting, role assignment, and user authentication/authorization. The structure prioritizes authorization independence by denormalizing authorization-related data.  The design employs structural segregation to ensure homogeneous security postures within collections.  Access modeling leverages path-based ownership and membership maps for collaborative data. \n\nTo ensure Authorization Independence (Strategy A), key authorization data, such as the brigadeId, is denormalized into subcollections where access depends on it. This avoids the need for `get()` calls in security rules, enabling atomic operations.\n\nStructural Segregation (Strategy B) is enforced by separating data with different access requirements into distinct collections.  For example, brigade-owned data (templates) are stored separately from battalion-specific data (gap analyses and personnel). This simplifies the security rules.\n\nAccess Modeling (Strategy C) utilizes hierarchical paths for user-owned data (e.g., `/brigades/{brigadeId}/templates/{templateId}`) and standardizes on membership maps where appropriate.  Path-based ownership enforces strict ownership, and role-based access control (DBAC) can be implemented with a dedicated `/roles` collection.\n\nThe data structure supports the required QAPs by using segregation and path-based ownership for secure list operations. For example, listing templates is restricted to brigade members via the `brigades/{brigadeId}/templates` collection. Similarly, battalion-specific data is secured under the `/brigades/{brigadeId}/battalions/{battalionId}` path."
   }
 }
+
     
