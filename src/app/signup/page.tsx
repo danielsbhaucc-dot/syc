@@ -14,9 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { ArrowLeft, UserPlus, Shield } from "lucide-react";
 import { useAuth, useUser } from "@/firebase";
-import { initiateEmailSignUp } from "@/firebase/non-blocking-login";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { FirebaseError } from "firebase/app";
@@ -48,7 +48,7 @@ export default function SignupPage() {
     }
     if (!auth) return;
     try {
-        await initiateEmailSignUp(auth, email, password);
+        await createUserWithEmailAndPassword(auth, email, password);
         toast({
             title: "ההרשמה הצליחה!",
             description: "כעת תועבר למסך הכניסה.",
@@ -89,19 +89,15 @@ export default function SignupPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center login-bg" dir="rtl">
-      <Card className="w-full max-w-md shadow-2xl bg-slate-900/90 backdrop-blur-lg border-slate-800">
-        <CardHeader className="text-center">
-          <div className="mb-4 flex justify-center">
-            <Logo className="h-16 w-16 text-primary" />
-          </div>
-          <CardTitle className="font-headline text-3xl tracking-tighter">יצירת משתמש חדש</CardTitle>
-          <CardDescription>
-            הצטרף למערכת ניהול ומעקב פערים
-          </CardDescription>
-        </CardHeader>
+      <div className="bg-slate-800/90 backdrop-blur-lg border border-slate-700 rounded-2xl shadow-2xl p-8 md:p-12 max-w-md w-full">
+        <div className="text-center mb-8">
+            <Shield className="w-20 h-20 mx-auto text-blue-500 mb-4" />
+            <h1 className="text-4xl font-black text-white mb-2 font-headline tracking-tighter">יצירת משתמש חדש</h1>
+            <p className="text-slate-400 font-semibold">הצטרף למערכת ניהול ומעקב פערים</p>
+        </div>
 
         <form onSubmit={handleSignup}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-0">
             <div className="space-y-2">
               <Label htmlFor="email">אימייל</Label>
               <Input
@@ -109,7 +105,7 @@ export default function SignupPage() {
                 type="email"
                 placeholder="user@example.com"
                 required
-                className="bg-slate-800 border-slate-700"
+                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -121,7 +117,8 @@ export default function SignupPage() {
                 id="password" 
                 type="password" 
                 required 
-                className="bg-slate-800 border-slate-700"
+                placeholder="בחר סיסמה"
+                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -133,15 +130,16 @@ export default function SignupPage() {
                 id="confirm-password" 
                 type="password" 
                 required 
-                className="bg-slate-800 border-slate-700"
+                placeholder="הקלד את הסיסמה שוב"
+                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full">
+          <CardFooter className="flex flex-col gap-4 p-0 pt-6">
+            <Button type="submit" className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-lg transition-all shadow-lg">
               <UserPlus className="ml-2" />
               הרשמה
             </Button>
@@ -153,7 +151,7 @@ export default function SignupPage() {
             </Button>
           </CardFooter>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }
