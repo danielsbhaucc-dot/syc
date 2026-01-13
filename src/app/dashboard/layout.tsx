@@ -32,7 +32,7 @@ export default function DashboardLayout({
   const userAvatar = PlaceHolderImages.find((img) => img.id === "user-avatar");
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar side="right">
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <Logo className="size-7 shrink-0 text-primary" />
