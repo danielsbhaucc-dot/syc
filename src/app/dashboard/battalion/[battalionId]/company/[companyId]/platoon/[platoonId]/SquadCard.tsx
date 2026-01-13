@@ -32,19 +32,23 @@ export interface Soldier {
     gap?: string;
 }
 
-const fireteamColors: { [key: string]: string } = {
-    chod: 'bg-blue-900/50 text-blue-300 border-blue-700',
-    ratak: 'bg-green-900/50 text-green-300 border-green-700',
-    cmd: 'bg-slate-700/50 text-slate-300 border-slate-600',
-    hq: 'bg-orange-900/50 text-orange-300 border-orange-700',
-    sabotage: 'bg-orange-900/50 text-orange-300 border-orange-700',
-    default: 'bg-gray-700/50 text-gray-300 border-gray-600',
+const fireteamColors: { [key: string]: { bg: string, text: string, border: string } } = {
+    chod: { bg: 'bg-blue-900/20', text: 'text-blue-300', border: 'border-blue-700' },
+    ratak: { bg: 'bg-green-900/20', text: 'text-green-300', border: 'border-green-700' },
+    cmd: { bg: 'bg-slate-800/30', text: 'text-slate-300', border: 'border-slate-600' },
+    hq: { bg: 'bg-orange-900/20', text: 'text-orange-300', border: 'border-orange-700' },
+    sabotage: { bg: 'bg-orange-900/20', text: 'text-orange-300', border: 'border-orange-700' },
+    default: { bg: 'bg-gray-800/30', text: 'text-gray-300', border: 'border-gray-600' },
 };
 
 
 const getFireteamColor = (fireteam: string) => {
     const key = fireteam.toLowerCase();
-    if (key in fireteamColors) return fireteamColors[key];
+    if (key.includes('חוד') || key.includes('chod')) return fireteamColors.chod;
+    if (key.includes('רתק') || key.includes('ratak')) return fireteamColors.ratak;
+    if (key.includes('פיקוד') || key.includes('cmd')) return fireteamColors.cmd;
+    if (key.includes('חפ"ק') || key.includes('hq')) return fireteamColors.hq;
+    if (key.includes('חבלה') || key.includes('sabotage')) return fireteamColors.sabotage;
     return fireteamColors.default;
 }
 
@@ -139,11 +143,11 @@ function AddSoldierDialog({ squadId, pathParams, existingFireteams }: { squadId:
                         {existingFireteams.map((ft) => (
                             <SelectItem key={ft} value={ft}>{ft}</SelectItem>
                         ))}
-                         <SelectItem value="chod">חוליה 1 - חוד</SelectItem>
-                         <SelectItem value="ratak">חוליה 2 - רתק</SelectItem>
-                         <SelectItem value="cmd">חוליה 3 - פיקוד וסגירה</SelectItem>
-                         <SelectItem value="hq">חפ"ק</SelectItem>
-                         <SelectItem value="sabotage">חוליית חבלה</SelectItem>
+                         <SelectItem value="חוליה 1 - חוד">חוליה 1 - חוד</SelectItem>
+                         <SelectItem value="חוליה 2 - רתק">חוליה 2 - רתק</SelectItem>
+                         <SelectItem value="חוליה 3 - פיקוד וסגירה">חוליה 3 - פיקוד וסגירה</SelectItem>
+                         <SelectItem value="חפ&quot;ק">חפ"ק</SelectItem>
+                         <SelectItem value="חוליית חבלה">חוליית חבלה</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -183,7 +187,7 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
 
     const fireteams = React.useMemo(() => {
         if (!squad.soldiers) return {};
-        return squad.soldiers.reduce((acc, soldier) => {
+        const teams = squad.soldiers.reduce((acc, soldier) => {
             const team = soldier.fireteam || 'ללא שיוך';
             if (!acc[team]) {
                 acc[team] = [];
@@ -191,6 +195,22 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
             acc[team].push(soldier);
             return acc;
         }, {} as Record<string, Soldier[]>);
+
+        // Sort fireteams: חוד, then רתק, then פיקוד
+        const sortedKeys = Object.keys(teams).sort((a, b) => {
+            if (a.includes('חוד')) return -1;
+            if (b.includes('חוד')) return 1;
+            if (a.includes('רתק')) return -1;
+            if (b.includes('רתק')) return 1;
+            return 0;
+        });
+
+        const sortedTeams: Record<string, Soldier[]> = {};
+        for (const key of sortedKeys) {
+            sortedTeams[key] = teams[key];
+        }
+        return sortedTeams;
+        
     }, [squad.soldiers]);
 
     const existingFireteamNames = Object.keys(fireteams);
@@ -224,10 +244,11 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
             <div className={`grid grid-cols-1 ${gridColsClass} gap-6 mt-4`}>
                {Object.entries(fireteams).map(([fireteamName, teamSoldiers]) => {
                  if (teamSoldiers.length === 0) return null;
+                 const teamColors = getFireteamColor(fireteamName);
 
                  return (
-                    <div key={fireteamName} className="flex flex-col gap-4 rounded-lg border border-slate-700 bg-slate-900/50 p-4">
-                        <div className={`inline-block self-start text-sm font-bold px-3 py-1 rounded ${getFireteamColor(fireteamName)}`}>
+                    <div key={fireteamName} className={`flex flex-col gap-4 rounded-lg border bg-slate-900/50 p-4 ${teamColors.border}`}>
+                        <div className={`inline-block self-start text-sm font-bold px-3 py-1 rounded ${teamColors.bg} ${teamColors.text} border ${teamColors.border}`}>
                             {fireteamName}
                         </div>
                         <div className="grid grid-cols-2 gap-4">

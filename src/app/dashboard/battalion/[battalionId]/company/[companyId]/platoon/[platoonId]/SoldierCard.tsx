@@ -13,19 +13,22 @@ import {
     Sword,
     Package,
     HeartPulse,
+    UserCog,
+    UserShield,
 } from 'lucide-react';
 
 const roleIcons: { [key: string]: React.ReactNode } = {
     'מפקד': <UserCircle className="text-yellow-400" />,
     'מ"כ': <UserCircle className="text-yellow-400" />,
-    'סמל': <Shield className="text-blue-400" />,
-    'נגביסט': <Sword className="text-green-400" />,
+    'סמל': <UserShield className="text-blue-400" />,
+    'נגביסט': <Sword className="text-emerald-400" />,
     'חובש': <HeartPulse className="text-red-400" />,
     'קלע': <Crosshair className="text-green-400" />,
     'חבלן': <Bomb className="text-orange-400" />,
     'קשר': <RadioTower className="text-blue-400" />,
     'מע"ר': <HeartPulse className="text-red-400" />,
     'רובאי': <PersonStanding className="text-slate-400" />,
+    'מוביל': <PersonStanding className="text-blue-400" />,
     default: <User className="text-slate-400" />,
 };
 
@@ -35,7 +38,7 @@ const getRoleIcon = (role: string) => {
 };
 
 const EquipmentPill = ({ item }: { item: string }) => (
-    <span className="bg-[#1e293b] border border-[#475569] text-[#cbd5e1] text-xs font-semibold px-2 py-0.5 rounded-md whitespace-nowrap">
+    <span className="bg-[#1e293b] border border-[#475569] text-[#cbd5e1] text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap">
         {item}
     </span>
 );
@@ -44,7 +47,7 @@ export function SoldierCard({ soldier }: { soldier: Soldier }) {
     const hasGap = soldier.gap && soldier.gap.length > 0;
 
     return (
-        <div className={`relative flex min-h-[220px] flex-col items-center rounded-xl border bg-background p-3 text-center shadow-lg transition-all hover:-translate-y-1 hover:border-primary/80 ${hasGap ? 'border-red-500/50' : 'border-slate-700'}`}>
+        <div className={`relative flex min-h-[220px] flex-col items-center rounded-xl border bg-background p-3 text-center shadow-lg transition-all hover:-translate-y-1 hover:border-primary/80 ${hasGap ? 'border-red-500/50 bg-red-900/20' : 'border-slate-700'}`}>
             <div className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md bg-slate-700 text-xs font-bold border border-slate-600">
                 {soldier.positionInTeam || '?'}
             </div>
