@@ -9,13 +9,14 @@ import { Logo } from "@/components/logo";
 import { useAuth, useUser } from "@/firebase";
 import { signInWithEmailAndPassword, getIdTokenResult } from "firebase/auth";
 import Link from "next/link";
-import { Shield, Users, ArrowRight, UserPlus } from "lucide-react";
+import { Shield, Users, ArrowRight, UserPlus, Loader } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { FirebaseError } from "firebase/app";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -35,7 +36,7 @@ export default function LoginPage() {
             }
         }
     };
-    if (!isUserLoading) {
+    if (!isUserLoading && user) {
       handleRedirect();
     }
   }, [user, isUserLoading, router]);
@@ -50,6 +51,7 @@ export default function LoginPage() {
         });
         return;
     }
+    setIsSubmitting(true);
     try {
         await signInWithEmailAndPassword(auth, email, password);
         // The useEffect will handle the redirect after state update
@@ -67,13 +69,16 @@ export default function LoginPage() {
             title: "שגיאת התחברות",
             description: description,
         });
+    } finally {
+        setIsSubmitting(false);
     }
   };
   
   if (isUserLoading || user) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center login-bg">
-        <p>טוען...</p>
+        <Loader className="animate-spin" />
+        <p className="mt-4">טוען...</p>
       </div>
     );
   }
@@ -99,6 +104,7 @@ export default function LoginPage() {
                         className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        disabled={isSubmitting}
                     />
                 </div>
 
@@ -112,15 +118,17 @@ export default function LoginPage() {
                         className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={isSubmitting}
                     />
                 </div>
 
                 <Button 
                     type="submit" 
                     className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-lg transition-all shadow-lg"
+                    disabled={isSubmitting}
                 >
-                    <ArrowRight className="ml-2" />
-                    כניסה למערכת
+                    {isSubmitting ? <Loader className="animate-spin ml-2" /> : <ArrowRight className="ml-2" />}
+                    {isSubmitting ? 'מתחבר...' : 'כניסה למערכת'}
                 </Button>
                 
                 <div className="text-center text-sm">
@@ -140,3 +148,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

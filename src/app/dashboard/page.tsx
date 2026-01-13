@@ -163,7 +163,7 @@ function AddBattalionUserDialog({ brigadeId, battalionId, battalionName }: { bri
                     <DialogFooter>
                         <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? <Loader className="animate-spin ml-2" /> : null}
-                        {isSubmitting ? 'יוצר משתמש...' : 'צור והקצה משתמש'}
+                        {isSubmitting ? 'יוצר והקצה משתמש...' : 'צור והקצה משתמש'}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -315,7 +315,7 @@ function AddBattalionDialog({ brigadeId }: { brigadeId: string }) {
 
 
 export default function DashboardPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
 
@@ -324,6 +324,8 @@ export default function DashboardPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isUserLoading) return; // Wait until user is loaded
+
     const checkUserRole = async () => {
         if (user) {
             const tokenResult = await user.getIdTokenResult(true); // Force refresh
@@ -334,13 +336,16 @@ export default function DashboardPage() {
                 router.push(`/dashboard/battalion/${battalionId}`);
             } else {
                 // This is a brigade-level user (admin)
-                setUserRole(claims.role || 'brigade');
+                setUserRole(claims.role || 'admin');
                 setBrigadeId(user.uid); // Brigade ID is the admin's UID
             }
+        } else {
+            // No user, redirect to login
+            router.push('/login');
         }
     };
     checkUserRole();
-  }, [user, router]);
+  }, [user, isUserLoading, router]);
 
   const battalionsQuery = useMemoFirebase(() => {
     if (!firestore || !brigadeId) return null;
@@ -350,7 +355,7 @@ export default function DashboardPage() {
 
   const { data: battalions, isLoading, error } = useCollection<Unit>(battalionsQuery);
   
-  if (isLoading || !battalions || !userRole || userRole === 'battalion' || !brigadeId) {
+  if (isUserLoading || isLoading || !userRole || userRole === 'battalion' || !brigadeId) {
     return <DashboardLoading />;
   }
   
@@ -511,3 +516,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

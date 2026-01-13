@@ -45,6 +45,10 @@
         "location": {
           "type": "string",
           "description": "Geographical location of the battalion."
+        },
+        "templateId": {
+          "type": "string",
+          "description": "Reference to the Template this battalion should adhere to."
         }
       },
       "required": [
@@ -254,7 +258,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Personnel",
       "type": "object",
-      "description": "Represents a member of the personnel.",
+      "description": "Represents a member of the personnel, assigned to a specific role within a battalion.",
       "properties": {
         "id": {
           "type": "string",
@@ -270,7 +274,7 @@
         },
         "roleId": {
           "type": "string",
-          "description": "Reference to Role. (Relationship: Role 1:N Personnel)"
+          "description": "Reference to the specific Role this person fills from the assigned template. (Relationship: Role 1:1 Personnel)"
         },
         "authorizations": {
           "type": "string",
@@ -284,7 +288,8 @@
       "required": [
         "id",
         "battalionId",
-        "name"
+        "name",
+        "roleId"
       ]
     },
     "GapAnalysis": {
@@ -545,7 +550,7 @@
           "schema": {
             "$ref": "#/backend/entities/Personnel"
           },
-          "description": "Represents personnel assigned to a battalion. This is a generic personnel list and might not be used for the detailed platoon view, which uses the Soldier entity.",
+          "description": "Represents personnel assigned to a battalion, filling a specific role from a template.",
           "params": [
             {
               "name": "brigadeId",
@@ -587,6 +592,8 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the TroopSync application's core features, focusing on template management, automated gap analysis, battalion reporting, role assignment, and user authentication/authorization. The structure prioritizes authorization independence by denormalizing authorization-related data. The design employs structural segregation to ensure homogeneous security postures within collections. Access modeling leverages path-based ownership and membership maps for collaborative data. To support the detailed platoon view, 'Squad' and 'Soldier' entities were added, nested under their respective parent units to maintain the hierarchical data model and simplify security rules. All access inherits from brigade membership, ensuring data is properly siloed. The addition of the GapAnalysis entity and its corresponding path allows for storing the results of comparing a battalion's status against a template, which is a key feature."
+    "reasoning": "The Firestore structure is designed to support the TroopSync application's core features, focusing on template management, automated gap analysis, battalion reporting, role assignment, and user authentication/authorization. The structure prioritizes authorization independence by denormalizing authorization-related data. The design employs structural segregation to ensure homogeneous security postures within collections. Access modeling leverages path-based ownership and membership maps for collaborative data. To support the detailed platoon view, 'Squad' and 'Soldier' entities were added, nested under their respective parent units to maintain the hierarchical data model and simplify security rules. All access inherits from brigade membership, ensuring data is properly siloed. The addition of the GapAnalysis entity and its corresponding path allows for storing the results of comparing a battalion's status against a template, which is a key feature. The Personnel entity now includes a roleId to explicitly link a person to a template role, enabling the core workflow of assigning personnel to fulfill template requirements."
   }
 }
+
+    
