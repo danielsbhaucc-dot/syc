@@ -3,18 +3,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as admin from 'firebase-admin';
 
+// Initialize dotenv to load .env.local file
+require('dotenv').config({ path: '.env.local' });
+
 // Helper function to initialize Firebase Admin SDK safely
 function initializeFirebaseAdmin() {
-    // In a real production environment, the service account key would be set.
-    // For this development environment, we will avoid initializing to prevent errors.
-    if (process.env.NODE_ENV === 'development' || !process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-        return null;
-    }
-
     if (admin.apps.length > 0) {
         return admin.app();
     }
     
+    // Check if the service account key is available in environment variables
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+        console.error('Firebase Admin Initialization Error: FIREBASE_SERVICE_ACCOUNT_KEY is not set in .env.local');
+        // Do not throw an error here, let the POST handler manage the response
+        return null;
+    }
+
     try {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
         return admin.initializeApp({
@@ -22,31 +26,23 @@ function initializeFirebaseAdmin() {
         });
     } catch (error) {
         console.error('Firebase Admin Initialization Error:', error);
-        throw new Error('Failed to initialize Firebase Admin SDK. Please check service account credentials.');
+        // Do not throw an error here
+        return null;
     }
 }
 
+// Initialize admin outside of the request handler to ensure it's done only once.
+const adminApp = initializeFirebaseAdmin();
+
 
 export async function POST(req: NextRequest) {
-    // Development/Demo Mock:
-    // In this environment, we cannot securely handle service account keys required for user creation.
-    // Therefore, we will simulate a successful user creation to allow the UI flow to proceed.
-    // This avoids the "Server configuration error".
-    if (process.env.NODE_ENV === 'development' || !process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-        console.log("Mocking user creation for development environment.");
-        // Simulate a delay to make it feel real
-        await new Promise(resolve => setTimeout(resolve, 1000)); 
-        // Return a successful response with a fake UID.
-        return NextResponse.json({ uid: `mock_${Date.now()}`, message: 'User created successfully (Mock)' }, { status: 201 });
+    if (!adminApp) {
+        const errorMessage = 'Server configuration error. Firebase Admin SDK not initialized. Is FIREBASE_SERVICE_ACCOUNT_KEY set in .env.local?';
+        console.error(errorMessage);
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 
-    // --- Production Logic (will not run in this environment) ---
     try {
-        const adminApp = initializeFirebaseAdmin();
-        if (!adminApp) {
-             throw new Error('Server configuration error. Service account key is not set up.');
-        }
-
         const adminAuth = admin.auth(adminApp);
         const adminFirestore = admin.firestore(adminApp);
 
@@ -88,9 +84,6 @@ export async function POST(req: NextRequest) {
         } else if (error.code === 'auth/invalid-password') {
             errorMessage = 'The password must be a string with at least six characters.';
             statusCode = 400;
-        } else if (error.message.includes('Service account key is not set up')) {
-            errorMessage = 'Server configuration error. Service account key is not set up.';
-            statusCode = 500;
         }
 
         return NextResponse.json({ error: errorMessage, details: error.message }, { status: statusCode });
