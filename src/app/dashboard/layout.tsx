@@ -39,7 +39,42 @@ export default function DashboardLayout({
             <span className="font-headline text-lg">מערכת שליטה</span>
           </div>
         </SidebarHeader>
-        <SidebarContent>התפריט הזה מסתיר את התוכן.</SidebarContent>
+        <SidebarContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/dashboard">
+                  <Home />
+                  לוח מחוונים
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/dashboard/templates">
+                  <LayoutTemplate />
+                  תבניות
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/dashboard/reporting">
+                  <FileText />
+                  דיווח
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/dashboard/reports">
+                  <FileOutput />
+                  דוחות
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
         <SidebarSeparator />
         <SidebarFooter>
           <div className="flex w-full items-center justify-between">
