@@ -319,20 +319,23 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  // The brigadeId is the user's UID.
-  const brigadeId = user?.uid;
+  // The brigadeId is the user's UID for brigade-level users.
+  const [brigadeId, setBrigadeId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUserRole = async () => {
         if (user) {
-            const tokenResult = await user.getIdTokenResult();
-            const role = tokenResult.claims.role;
-             if (role === 'battalion') {
-                const battalionId = tokenResult.claims.battalionId;
+            const tokenResult = await user.getIdTokenResult(true); // Force refresh
+            const claims = tokenResult.claims;
+             if (claims.role === 'battalion') {
+                const battalionId = claims.battalionId;
+                // If battalion user, redirect them to their specific dashboard
                 router.push(`/dashboard/battalion/${battalionId}`);
             } else {
-                setUserRole(role || 'brigade');
+                // This is a brigade-level user (admin)
+                setUserRole(claims.role || 'brigade');
+                setBrigadeId(user.uid); // Brigade ID is the admin's UID
             }
         }
     };
@@ -342,14 +345,12 @@ export default function DashboardPage() {
   const battalionsQuery = useMemoFirebase(() => {
     if (!firestore || !brigadeId) return null;
     // Query for battalions that belong to the user's brigade
-    return query(
-      collection(firestore, 'brigades', brigadeId, 'battalions')
-    );
+    return collection(firestore, 'brigades', brigadeId, 'battalions');
   }, [firestore, brigadeId]);
 
   const { data: battalions, isLoading, error } = useCollection<Unit>(battalionsQuery);
   
-  if (isLoading || !battalions || !userRole || userRole === 'battalion') {
+  if (isLoading || !battalions || !userRole || userRole === 'battalion' || !brigadeId) {
     return <DashboardLoading />;
   }
   
