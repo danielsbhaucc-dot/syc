@@ -3,8 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as admin from 'firebase-admin';
 
-// Initialize dotenv to load .env.local file
-require('dotenv').config({ path: '.env.local' });
+// NOTE: No need for dotenv with Next.js. It loads .env.local automatically.
 
 // Helper function to initialize Firebase Admin SDK safely
 // This ensures it's initialized only once
