@@ -24,32 +24,32 @@ export interface Soldier {
     id: string;
     name: string;
     role: string;
-    fireteam: 'chod' | 'ratak' | 'cmd' | 'hq';
+    fireteam: string; // Changed to string for flexibility
     positionInTeam?: number;
     equipment?: string[];
     gap?: string;
 }
 
-const fireteamNames = {
-    chod: 'חוליה 1 - חוד',
-    ratak: 'חוליה 2 - רתק',
-    cmd: 'חוליה 3 - פיקוד וסגירה',
-    hq: 'חפ"ק'
-};
-
-const fireteamColors = {
+// This will now be used as a fallback/default for styling, but is not restrictive.
+const fireteamColors: { [key: string]: string } = {
     chod: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     ratak: 'bg-green-500/20 text-green-400 border-green-500/30',
     cmd: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
-    hq: 'bg-orange-500/20 text-orange-400 border-orange-500/30'
+    hq: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    default: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+};
+
+const getFireteamColor = (fireteam: string) => {
+    const key = fireteam.toLowerCase();
+    if (key in fireteamColors) return fireteamColors[key];
+    return fireteamColors.default;
 }
 
-
-function AddSoldierDialog({ squadId, pathParams }: { squadId: string; pathParams: PathParams }) {
+function AddSoldierDialog({ squadId, pathParams, existingFireteams }: { squadId: string; pathParams: PathParams, existingFireteams: string[] }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
-  const [fireteam, setFireteam] = useState<Soldier['fireteam'] | undefined>();
+  const [fireteam, setFireteam] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -115,14 +115,19 @@ function AddSoldierDialog({ squadId, pathParams }: { squadId: string; pathParams
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="fireteam" className="text-right">חוליה</Label>
-                 <Select value={fireteam} onValueChange={(value) => setFireteam(value as Soldier['fireteam'])}>
+                 <Select value={fireteam} onValueChange={(value) => setFireteam(value)}>
                     <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="בחר חוליה" />
                     </SelectTrigger>
                     <SelectContent dir='rtl'>
-                        {Object.entries(fireteamNames).map(([key, value]) => (
-                            <SelectItem key={key} value={key}>{value}</SelectItem>
+                        {existingFireteams.map((ft) => (
+                            <SelectItem key={ft} value={ft}>{ft}</SelectItem>
                         ))}
+                         <SelectItem value="chod">חוליה 1 - חוד</SelectItem>
+                         <SelectItem value="ratak">חוליה 2 - רתק</SelectItem>
+                         <SelectItem value="cmd">חוליה 3 - פיקוד וסגירה</SelectItem>
+                         <SelectItem value="hq">חפ"ק</SelectItem>
+                         <SelectItem value="sabotage">חוליית חבלה</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -150,15 +155,27 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
 
     const { data: soldiers, isLoading, error } = useCollection<Soldier>(soldiersQuery);
 
-    const fireteams = {
-        chod: soldiers?.filter(s => s.fireteam === 'chod') || [],
-        ratak: soldiers?.filter(s => s.fireteam === 'ratak') || [],
-        cmd: soldiers?.filter(s => s.fireteam === 'cmd') || [],
-        hq: soldiers?.filter(s => s.fireteam === 'hq') || [],
-    };
+    const fireteams = React.useMemo(() => {
+        if (!soldiers) return {};
+        return soldiers.reduce((acc, soldier) => {
+            const team = soldier.fireteam || 'ללא שיוך';
+            if (!acc[team]) {
+                acc[team] = [];
+            }
+            acc[team].push(soldier);
+            return acc;
+        }, {} as Record<string, Soldier[]>);
+    }, [soldiers]);
+
+    const existingFireteamNames = Object.keys(fireteams);
     
-    const hasHq = fireteams.hq.length > 0;
-    const gridCols = hasHq ? 'xl:grid-cols-2' : 'xl:grid-cols-3';
+    // Determine grid columns dynamically based on number of fireteams
+    const numTeams = existingFireteamNames.length;
+    let gridColsClass = 'xl:grid-cols-3'; // Default
+    if (numTeams === 1) gridColsClass = 'xl:grid-cols-1';
+    if (numTeams === 2) gridColsClass = 'xl:grid-cols-2';
+    if (numTeams >= 4) gridColsClass = 'xl:grid-cols-4';
+
 
     return (
         <div className="relative mb-10 rounded-2xl border border-border bg-card p-6 pt-10 shadow-lg">
@@ -167,7 +184,7 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
             </div>
 
             <div className='absolute top-4 left-4'>
-                <AddSoldierDialog squadId={squad.id} pathParams={pathParams} />
+                <AddSoldierDialog squadId={squad.id} pathParams={pathParams} existingFireteams={existingFireteamNames} />
             </div>
 
             {isLoading && <div><Loader className="mx-auto animate-spin" /></div>}
@@ -180,18 +197,20 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
                 </div>
             )}
             
-            <div className={`grid grid-cols-1 ${gridCols} gap-6 mt-4`}>
-               {Object.entries(fireteams).map(([key, teamSoldiers]) => {
+            <div className={`grid grid-cols-1 ${gridColsClass} gap-6 mt-4`}>
+               {Object.entries(fireteams).map(([fireteamName, teamSoldiers]) => {
                  if (teamSoldiers.length === 0) return null;
-                 const teamKey = key as keyof typeof fireteamNames;
 
                  return (
-                    <div key={key} className="flex flex-col gap-4 rounded-lg border border-border bg-background/50 p-4">
-                        <div className={`inline-block self-start text-sm font-bold px-3 py-1 rounded ${fireteamColors[teamKey]}`}>
-                            {fireteamNames[teamKey]}
+                    <div key={fireteamName} className="flex flex-col gap-4 rounded-lg border border-border bg-background/50 p-4">
+                        <div className={`inline-block self-start text-sm font-bold px-3 py-1 rounded ${getFireteamColor(fireteamName)}`}>
+                            {fireteamName}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            {teamSoldiers.map(soldier => <SoldierCard key={soldier.id} soldier={soldier} />)}
+                            {teamSoldiers
+                                .sort((a, b) => (a.positionInTeam || 99) - (b.positionInTeam || 99))
+                                .map(soldier => <SoldierCard key={soldier.id} soldier={soldier} />)
+                            }
                         </div>
                     </div>
                  )
@@ -200,4 +219,3 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
         </div>
     );
 }
-
