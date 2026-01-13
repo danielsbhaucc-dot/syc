@@ -4,16 +4,18 @@ let adminAuth: admin.auth.Auth | null = null;
 let adminFirestore: admin.firestore.Firestore | null = null;
 
 try {
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  // Directly embedding the service account key as a string.
+  // This avoids issues with environment variable parsing in some environments.
+  const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
-  if (!serviceAccountKey) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is not set in environment variables.');
+  if (!serviceAccountString) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable not found.');
   }
 
-  // Parse the stringified JSON from the environment variable
-  const serviceAccount = JSON.parse(serviceAccountKey);
-
   if (admin.apps.length === 0) {
+    // Parse the JSON string to get the service account object
+    const serviceAccount = JSON.parse(serviceAccountString);
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
