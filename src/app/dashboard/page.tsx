@@ -363,20 +363,20 @@ export default function DashboardPage() {
     return <div className="text-red-500">שגיאה בטעינת הנתונים: {error.message}</div>
   }
 
-  const totalPersonnel = battalions.reduce(
+  const totalPersonnel = (battalions || []).reduce(
     (acc, unit) => acc + (unit.personnel?.assigned || 0),
     0
   );
-  const totalEquipment = battalions.reduce(
+  const totalEquipment = (battalions || []).reduce(
     (acc, unit) => acc + (unit.equipment?.onHand || 0),
     0
   );
   const overallReadiness =
-    battalions.length > 0
+    battalions && battalions.length > 0
       ? battalions.reduce((acc, unit) => acc + (unit.readiness || 0), 0) /
         battalions.length
       : 0;
-  const criticalAlerts = battalions.filter(
+  const criticalAlerts = (battalions || []).filter(
     (unit) => unit.status === "Critical"
   ).length;
 
@@ -447,7 +447,7 @@ export default function DashboardPage() {
           {brigadeId && <AddBattalionDialog brigadeId={brigadeId} />}
         </CardHeader>
         <CardContent>
-          {battalions.length === 0 ? (
+          {!battalions || battalions.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Users className="mx-auto h-12 w-12" />
               <h3 className="mt-4 text-lg font-medium">לא נמצאו גדודים</h3>
@@ -516,5 +516,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
