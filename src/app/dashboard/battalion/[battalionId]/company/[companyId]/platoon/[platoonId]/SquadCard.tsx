@@ -33,16 +33,16 @@ export interface Soldier {
 }
 
 const fireteamColors: { [key: string]: { bg: string, text: string, border: string } } = {
-    chod: { bg: 'bg-blue-900/20', text: 'text-blue-300', border: 'border-blue-700' },
-    ratak: { bg: 'bg-green-900/20', text: 'text-green-300', border: 'border-green-700' },
-    cmd: { bg: 'bg-slate-800/30', text: 'text-slate-300', border: 'border-slate-600' },
-    hq: { bg: 'bg-orange-900/20', text: 'text-orange-300', border: 'border-orange-700' },
-    sabotage: { bg: 'bg-orange-900/20', text: 'text-orange-300', border: 'border-orange-700' },
-    default: { bg: 'bg-gray-800/30', text: 'text-gray-300', border: 'border-gray-600' },
+    chod: { bg: 'bg-blue-900/30', text: 'text-blue-300', border: 'border-blue-700' },
+    ratak: { bg: 'bg-green-900/30', text: 'text-green-300', border: 'border-green-700' },
+    cmd: { bg: 'bg-slate-800/50', text: 'text-slate-300', border: 'border-slate-600' },
+    hq: { bg: 'bg-slate-800/50', text: 'text-slate-300', border: 'border-slate-600' },
+    sabotage: { bg: 'bg-orange-900/30', text: 'text-orange-300', border: 'border-orange-700' },
+    default: { bg: 'bg-gray-800/50', text: 'text-gray-300', border: 'border-gray-600' },
 };
 
 
-const getFireteamColor = (fireteam: string) => {
+const getFireteamStyle = (fireteam: string) => {
     const key = fireteam.toLowerCase();
     if (key.includes('חוד') || key.includes('chod')) return fireteamColors.chod;
     if (key.includes('רתק') || key.includes('ratak')) return fireteamColors.ratak;
@@ -244,11 +244,11 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
             <div className={`grid grid-cols-1 ${gridColsClass} gap-6 mt-4`}>
                {Object.entries(fireteams).map(([fireteamName, teamSoldiers]) => {
                  if (teamSoldiers.length === 0) return null;
-                 const teamColors = getFireteamColor(fireteamName);
+                 const teamStyle = getFireteamStyle(fireteamName);
 
                  return (
-                    <div key={fireteamName} className={`flex flex-col gap-4 rounded-lg border bg-slate-900/50 p-4 ${teamColors.border}`}>
-                        <div className={`inline-block self-start text-sm font-bold px-3 py-1 rounded ${teamColors.bg} ${teamColors.text} border ${teamColors.border}`}>
+                    <div key={fireteamName} className={`flex flex-col gap-4 rounded-lg border bg-slate-900/50 p-4 ${teamStyle.border}`}>
+                        <div className={`inline-block self-start text-sm font-bold px-3 py-1 rounded ${teamStyle.bg} ${teamStyle.text} border ${teamStyle.border}`}>
                             {fireteamName}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
