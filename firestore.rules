@@ -46,14 +46,6 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    
-    /**
-     * Checks if the user is the owner of the brigade document.
-     * This is a direct check of UID against the document ID.
-     */
-    function isBrigadeOwner(brigadeId) {
-      return isSignedIn() && request.auth.uid == brigadeId;
-    }
 
     /**
      * Checks if the requesting user is a member of the specified brigade.
@@ -104,15 +96,12 @@ service cloud.firestore {
     /**
      * @description Controls access to Brigade documents, the root of all other data.
      * @path /brigades/{brigadeId}
-     * @allow (get) A user who is the owner or a member of the brigade.
-     * @allow (list) A user who is a member of the brigade.
+     * @allow (get, list) A user who is a member of the brigade.
      * @allow (create) Any signed-in user creating a brigade and adding themselves as a member.
-     * @deny (get) A user trying to read a brigade document they are not a member of.
      * @principle Establishes the "Brigade Membership" model for all nested data.
      */
     match /brigades/{brigadeId} {
-      allow get: if isBrigadeOwner(brigadeId) || isBrigadeMember(brigadeId);
-      allow list: if isBrigadeMember(brigadeId); 
+      allow read: if isBrigadeMember(brigadeId);
       allow create: if isInitialBrigadeCreator();
       allow update, delete: if isExistingBrigadeMember(brigadeId);
     }
@@ -121,7 +110,6 @@ service cloud.firestore {
      * @description Controls access to Battalions within a Brigade.
      * @path /brigades/{brigadeId}/battalions/{battalionId}
      * @allow (read, write) Any member of the parent brigade.
-     * @deny (create) A brigade member trying to create a battalion with a mismatched 'brigadeId' field.
      * @principle Inherits access from the parent Brigade document, enforcing relational integrity.
      */
     match /brigades/{brigadeId}/battalions/{battalionId} {
@@ -147,12 +135,31 @@ service cloud.firestore {
     match /brigades/{brigadeId}/battalions/{battalionId}/companies/{companyId}/platoons/{platoonId} {
         allow read, write: if isBrigadeMember(brigadeId);
     }
+    
+    /**
+     * @description Controls access to Squads within a Platoon.
+     * @path .../platoons/{platoonId}/squads/{squadId}
+     * @allow (read, write) Any member of the brigade.
+     * @principle Inherits access from the Brigade.
+     */
+    match /brigades/{brigadeId}/battalions/{battalionId}/companies/{companyId}/platoons/{platoonId}/squads/{squadId} {
+      allow read, write: if isBrigadeMember(brigadeId);
+    }
+
+    /**
+     * @description Controls access to Soldiers within a Squad.
+     * @path .../squads/{squadId}/soldiers/{soldierId}
+     * @allow (read, write) Any member of the brigade.
+     * @principle Inherits access from the Brigade.
+     */
+    match /brigades/{brigadeId}/battalions/{battalionId}/companies/{companyId}/platoons/{platoonId}/squads/{squadId}/soldiers/{soldierId} {
+      allow read, write: if isBrigadeMember(brigadeId);
+    }
 
     /**
      * @description Controls access to Templates within a Brigade.
      * @path /brigades/{brigadeId}/templates/{templateId}
      * @allow (read, write) Any member of the parent brigade.
-     * @deny (update) A brigade member trying to change the immutable 'brigadeId' field.
      * @principle Inherits access from the parent Brigade document, enforcing relational integrity.
      */
     match /brigades/{brigadeId}/templates/{templateId} {
@@ -163,7 +170,6 @@ service cloud.firestore {
      * @description Controls access to Roles within a Template.
      * @path /brigades/{brigadeId}/templates/{templateId}/roles/{roleId}
      * @allow (read, write) Any member of the grandparent brigade.
-     * @deny (create) A brigade member trying to create a role with a mismatched 'templateId' field.
      * @principle Inherits access from the grandparent Brigade, enforcing relational integrity with the parent Template.
      */
     match /brigades/{brigadeId}/templates/{templateId}/roles/{roleId} {
@@ -174,7 +180,6 @@ service cloud.firestore {
      * @description Controls access to Personnel within a Battalion.
      * @path /brigades/{brigadeId}/battalions/{battalionId}/personnel/{personnelId}
      * @allow (read, write) Any member of the great-grandparent brigade.
-     * @deny (create) A brigade member trying to create a personnel doc with a mismatched 'battalionId'.
      * @principle Inherits access from the great-grandparent Brigade, enforcing relational integrity with the parent Battalion.
      */
     match /brigades/{brigadeId}/battalions/{battalionId}/personnel/{personnelId} {
@@ -185,7 +190,6 @@ service cloud.firestore {
      * @description Controls access to Gap Analyses within a Battalion.
      * @path /brigades/{brigadeId}/battalions/{battalionId}/gapAnalyses/{gapAnalysisId}
      * @allow (read, write) Any member of the great-grandparent brigade.
-     * @deny (update) A brigade member trying to change the immutable 'battalionId' of an existing analysis.
      * @principle Inherits access from the great-grandparent Brigade, enforcing relational integrity with the parent Battalion.
      */
     match /brigades/{brigadeId}/battalions/{battalionId}/gapAnalyses/{gapAnalysisId} {
@@ -194,5 +198,3 @@ service cloud.firestore {
 
   }
 }
-
-    

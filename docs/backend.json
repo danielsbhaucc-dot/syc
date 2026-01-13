@@ -103,6 +103,91 @@
         "name"
       ]
     },
+    "Squad": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Squad",
+      "type": "object",
+      "description": "Represents a squad (Kita) within a platoon.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Squad entity."
+        },
+        "platoonId": {
+          "type": "string",
+          "description": "Reference to Platoon."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name or number of the squad (e.g., 'כיתה א')."
+        },
+        "commanderName": {
+          "type": "string",
+          "description": "Name of the squad commander."
+        }
+      },
+      "required": [
+        "id",
+        "platoonId",
+        "name"
+      ]
+    },
+    "Soldier": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Soldier",
+      "type": "object",
+      "description": "Represents a single soldier within a squad.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Soldier entity."
+        },
+        "squadId": {
+          "type": "string",
+          "description": "Reference to Squad."
+        },
+        "name": {
+          "type": "string",
+          "description": "The soldier's name."
+        },
+        "role": {
+          "type": "string",
+          "description": "The soldier's role in the squad (e.g., 'נגביסט')."
+        },
+        "fireteam": {
+          "type": "string",
+          "description": "The fireteam (Chulia) the soldier belongs to (e.g., 'חוד', 'רתק').",
+          "enum": [
+            "chod",
+            "ratak",
+            "cmd",
+            "hq"
+          ]
+        },
+        "positionInTeam": {
+          "type": "number",
+          "description": "The soldier's number or position within the fireteam."
+        },
+        "equipment": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of equipment assigned to the soldier."
+        },
+        "gap": {
+          "type": "string",
+          "description": "Description of any readiness gap (e.g., 'חסר הסמכה')."
+        }
+      },
+      "required": [
+        "id",
+        "squadId",
+        "name",
+        "role",
+        "fireteam"
+      ]
+    },
     "Template": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Template",
@@ -276,7 +361,7 @@
           "schema": {
             "$ref": "#/backend/entities/Battalion"
           },
-          "description": "Represents a battalion within a brigade. Includes denormalized 'brigadeId' for authorization independence.",
+          "description": "Represents a battalion within a brigade.",
           "params": [
             {
               "name": "brigadeId",
@@ -296,7 +381,7 @@
           "schema": {
             "$ref": "#/backend/entities/Company"
           },
-          "description": "Represents a company within a battalion. Includes denormalized 'brigadeId' and 'battalionId' for authorization independence.",
+          "description": "Represents a company within a battalion.",
           "params": [
             {
               "name": "brigadeId",
@@ -320,7 +405,7 @@
           "schema": {
             "$ref": "#/backend/entities/Platoon"
           },
-          "description": "Represents a platoon within a company. Includes denormalized 'brigadeId', 'battalionId' and 'companyId' for authorization independence.",
+          "description": "Represents a platoon within a company.",
           "params": [
             {
               "name": "brigadeId",
@@ -342,13 +427,81 @@
         }
       },
       {
+        "path": "/brigades/{brigadeId}/battalions/{battalionId}/companies/{companyId}/platoons/{platoonId}/squads/{squadId}",
+        "definition": {
+          "entityName": "Squad",
+          "schema": {
+            "$ref": "#/backend/entities/Squad"
+          },
+          "description": "Represents a squad within a platoon.",
+          "params": [
+            {
+              "name": "brigadeId",
+              "description": "The unique identifier for the brigade."
+            },
+            {
+              "name": "battalionId",
+              "description": "The unique identifier for the battalion."
+            },
+            {
+              "name": "companyId",
+              "description": "The unique identifier for the company."
+            },
+            {
+              "name": "platoonId",
+              "description": "The unique identifier for the platoon."
+            },
+            {
+              "name": "squadId",
+              "description": "The unique identifier for the squad."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/brigades/{brigadeId}/battalions/{battalionId}/companies/{companyId}/platoons/{platoonId}/squads/{squadId}/soldiers/{soldierId}",
+        "definition": {
+          "entityName": "Soldier",
+          "schema": {
+            "$ref": "#/backend/entities/Soldier"
+          },
+          "description": "Represents a soldier within a squad.",
+          "params": [
+            {
+              "name": "brigadeId",
+              "description": "The unique identifier for the brigade."
+            },
+            {
+              "name": "battalionId",
+              "description": "The unique identifier for the battalion."
+            },
+            {
+              "name": "companyId",
+              "description": "The unique identifier for the company."
+            },
+            {
+              "name": "platoonId",
+              "description": "The unique identifier for the platoon."
+            },
+            {
+              "name": "squadId",
+              "description": "The unique identifier for the squad."
+            },
+            {
+              "name": "soldierId",
+              "description": "The unique identifier for the soldier."
+            }
+          ]
+        }
+      },
+      {
         "path": "/brigades/{brigadeId}/templates/{templateId}",
         "definition": {
           "entityName": "Template",
           "schema": {
             "$ref": "#/backend/entities/Template"
           },
-          "description": "Represents a template defined by a brigade. Includes denormalized 'brigadeId' for authorization independence.",
+          "description": "Represents a template defined by a brigade.",
           "params": [
             {
               "name": "brigadeId",
@@ -368,7 +521,7 @@
           "schema": {
             "$ref": "#/backend/entities/Role"
           },
-          "description": "Represents a role within a template. Includes denormalized 'brigadeId' and 'templateId' for authorization independence.",
+          "description": "Represents a role within a template.",
           "params": [
             {
               "name": "brigadeId",
@@ -392,7 +545,7 @@
           "schema": {
             "$ref": "#/backend/entities/Personnel"
           },
-          "description": "Represents personnel assigned to a battalion. Includes denormalized 'brigadeId' and 'battalionId' for authorization independence.",
+          "description": "Represents personnel assigned to a battalion. This is a generic personnel list and might not be used for the detailed platoon view, which uses the Soldier entity.",
           "params": [
             {
               "name": "brigadeId",
@@ -416,7 +569,7 @@
           "schema": {
             "$ref": "#/backend/entities/GapAnalysis"
           },
-          "description": "Represents a gap analysis for a battalion, linked to a template. Includes denormalized 'brigadeId', 'battalionId', and 'templateId' for authorization independence.",
+          "description": "Represents a gap analysis for a battalion, linked to a template.",
           "params": [
             {
               "name": "brigadeId",
@@ -434,8 +587,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the TroopSync application's core features, focusing on template management, automated gap analysis, battalion reporting, role assignment, and user authentication/authorization. The structure prioritizes authorization independence by denormalizing authorization-related data.  The design employs structural segregation to ensure homogeneous security postures within collections.  Access modeling leverages path-based ownership and membership maps for collaborative data. \n\nTo ensure Authorization Independence (Strategy A), key authorization data, such as the brigadeId, is denormalized into subcollections where access depends on it. This avoids the need for `get()` calls in security rules, enabling atomic operations.\n\nStructural Segregation (Strategy B) is enforced by separating data with different access requirements into distinct collections.  For example, brigade-owned data (templates) are stored separately from battalion-specific data (gap analyses and personnel). This simplifies the security rules.\n\nAccess Modeling (Strategy C) utilizes hierarchical paths for user-owned data (e.g., `/brigades/{brigadeId}/templates/{templateId}`) and standardizes on membership maps where appropriate.  Path-based ownership enforces strict ownership, and role-based access control (DBAC) can be implemented with a dedicated `/roles` collection.\n\nThe data structure supports the required QAPs by using segregation and path-based ownership for secure list operations. For example, listing templates is restricted to brigade members via the `brigades/{brigadeId}/templates` collection. Similarly, battalion-specific data is secured under the `/brigades/{brigadeId}/battalions/{battalionId}` path."
+    "reasoning": "The Firestore structure is designed to support the TroopSync application's core features, focusing on template management, automated gap analysis, battalion reporting, role assignment, and user authentication/authorization. The structure prioritizes authorization independence by denormalizing authorization-related data. The design employs structural segregation to ensure homogeneous security postures within collections. Access modeling leverages path-based ownership and membership maps for collaborative data. To support the detailed platoon view, 'Squad' and 'Soldier' entities were added, nested under their respective parent units to maintain the hierarchical data model and simplify security rules. All access inherits from brigade membership, ensuring data is properly siloed."
   }
 }
-
-    
