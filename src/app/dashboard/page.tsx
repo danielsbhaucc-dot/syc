@@ -112,13 +112,12 @@ export default function DashboardPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  // Assuming user has a custom claim 'brigadeId'
-  const brigadeId = 'default_brigade'; // Replace with user's actual brigadeId
+  // The brigadeId is the user's UID.
+  const brigadeId = user?.uid;
 
   const battalionsQuery = useMemoFirebase(() => {
     if (!firestore || !brigadeId) return null;
     // Query for battalions that belong to the user's brigade
-    // Note: The path is derived from `docs/backend.json`
     return query(
       collection(firestore, 'brigades', brigadeId, 'battalions')
     );

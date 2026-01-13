@@ -15,8 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import { ArrowLeft, UserPlus, Shield } from "lucide-react";
-import { useAuth, useUser } from "@/firebase";
+import { useAuth, useUser, useFirestore } from "@/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { FirebaseError } from "firebase/app";
@@ -26,6 +27,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
@@ -46,36 +48,50 @@ export default function SignupPage() {
       });
       return;
     }
-    if (!auth) return;
+    if (!auth || !firestore) return;
     try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        toast({
-            title: "ההרשמה הצליחה!",
-            description: "כעת תועבר למסך הכניסה.",
-        });
-        router.push('/login');
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const newUser = userCredential.user;
+
+      // Create a brigade for the new user.
+      // The brigade ID will be the user's UID for simplicity.
+      const brigadeRef = doc(firestore, "brigades", newUser.uid);
+      await setDoc(brigadeRef, {
+        name: `החטיבה של ${newUser.email}`,
+        location: "לא צוין",
+        // Add the user as the first member with an 'admin' role.
+        members: {
+          [newUser.uid]: "admin",
+        },
+      });
+
+      toast({
+        title: "ההרשמה הצליחה!",
+        description: "כעת תועבר למסך הכניסה.",
+      });
+      router.push('/login');
     } catch (error) {
-        let description = "אירעה שגיאה לא צפויה.";
-        if (error instanceof FirebaseError) {
-            switch (error.code) {
-                case 'auth/email-already-in-use':
-                    description = "כתובת האימייל כבר קיימת במערכת.";
-                    break;
-                case 'auth/invalid-email':
-                    description = "כתובת האימייל אינה תקינה.";
-                    break;
-                case 'auth/weak-password':
-                    description = "הסיסמה חלשה מדי. נסה סיסמה חזקה יותר.";
-                    break;
-                default:
-                    description = "אירעה שגיאה במהלך ההרשמה.";
-            }
+      let description = "אירעה שגיאה לא צפויה.";
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            description = "כתובת האימייל כבר קיימת במערכת.";
+            break;
+          case 'auth/invalid-email':
+            description = "כתובת האימייל אינה תקינה.";
+            break;
+          case 'auth/weak-password':
+            description = "הסיסמה חלשה מדי. נסה סיסמה חזקה יותר.";
+            break;
+          default:
+            description = "אירעה שגיאה במהלך ההרשמה.";
         }
-        toast({
-            variant: "destructive",
-            title: "שגיאת הרשמה",
-            description: description,
-        });
+      }
+      toast({
+        variant: "destructive",
+        title: "שגיאת הרשמה",
+        description: description,
+      });
     }
   };
   
