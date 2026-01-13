@@ -14,13 +14,12 @@ import {
     Package,
     HeartPulse,
     UserCog,
-    UserShield,
 } from 'lucide-react';
 
 const roleIcons: { [key: string]: React.ReactNode } = {
     'מפקד': <UserCircle className="text-yellow-400" />,
     'מ"כ': <UserCircle className="text-yellow-400" />,
-    'סמל': <UserShield className="text-blue-400" />,
+    'סמל': <Shield className="text-blue-400" />,
     'נגביסט': <Sword className="text-emerald-400" />,
     'חובש': <HeartPulse className="text-red-400" />,
     'קלע': <Crosshair className="text-green-400" />,
