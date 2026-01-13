@@ -97,6 +97,7 @@ service cloud.firestore {
      * @description Controls access to Brigade documents, the root of all other data.
      * @path /brigades/{brigadeId}
      * @allow (create) Any signed-in user creating a brigade and adding themselves as a member.
+     * @allow (get, list) A user who is a member of the brigade.
      * @deny (get) A user trying to read a brigade document they are not a member of.
      * @principle Establishes the "Brigade Membership" model for all nested data.
      */
@@ -114,10 +115,7 @@ service cloud.firestore {
      * @principle Inherits access from the parent Brigade document, enforcing relational integrity.
      */
     match /brigades/{brigadeId}/battalions/{battalionId} {
-      allow get, list: if isBrigadeMember(brigadeId);
-      allow create: if isBrigadeMember(brigadeId) && hasValidForeignKey('brigadeId', brigadeId);
-      allow update: if isExistingBrigadeMember(brigadeId) && isForeignKeyImmutable('brigadeId');
-      allow delete: if isExistingBrigadeMember(brigadeId);
+      allow read, write: if isBrigadeMember(brigadeId);
     }
 
     /**
@@ -128,10 +126,7 @@ service cloud.firestore {
      * @principle Inherits access from the parent Brigade document, enforcing relational integrity.
      */
     match /brigades/{brigadeId}/templates/{templateId} {
-      allow get, list: if isBrigadeMember(brigadeId);
-      allow create: if isBrigadeMember(brigadeId) && hasValidForeignKey('brigadeId', brigadeId);
-      allow update: if isExistingBrigadeMember(brigadeId) && isForeignKeyImmutable('brigadeId');
-      allow delete: if isExistingBrigadeMember(brigadeId);
+      allow read, write: if isBrigadeMember(brigadeId);
     }
 
     /**
@@ -142,10 +137,7 @@ service cloud.firestore {
      * @principle Inherits access from the grandparent Brigade, enforcing relational integrity with the parent Template.
      */
     match /brigades/{brigadeId}/templates/{templateId}/roles/{roleId} {
-      allow get, list: if isBrigadeMember(brigadeId);
-      allow create: if isBrigadeMember(brigadeId) && hasValidForeignKey('templateId', templateId);
-      allow update: if isExistingBrigadeMember(brigadeId) && isForeignKeyImmutable('templateId');
-      allow delete: if isExistingBrigadeMember(brigadeId);
+      allow read, write: if isBrigadeMember(brigadeId);
     }
 
     /**
@@ -156,10 +148,7 @@ service cloud.firestore {
      * @principle Inherits access from the great-grandparent Brigade, enforcing relational integrity with the parent Battalion.
      */
     match /brigades/{brigadeId}/battalions/{battalionId}/personnel/{personnelId} {
-      allow get, list: if isBrigadeMember(brigadeId);
-      allow create: if isBrigadeMember(brigadeId) && hasValidForeignKey('battalionId', battalionId);
-      allow update: if isExistingBrigadeMember(brigadeId) && isForeignKeyImmutable('battalionId');
-      allow delete: if isExistingBrigadeMember(brigadeId);
+      allow read, write: if isBrigadeMember(brigadeId);
     }
 
     /**
@@ -170,10 +159,7 @@ service cloud.firestore {
      * @principle Inherits access from the great-grandparent Brigade, enforcing relational integrity with the parent Battalion.
      */
     match /brigades/{brigadeId}/battalions/{battalionId}/gapAnalyses/{gapAnalysisId} {
-      allow get, list: if isBrigadeMember(brigadeId);
-      allow create: if isBrigadeMember(brigadeId) && hasValidForeignKey('battalionId', battalionId);
-      allow update: if isExistingBrigadeMember(brigadeId) && isForeignKeyImmutable('battalionId');
-      allow delete: if isExistingBrigadeMember(brigadeId);
+      allow read, write: if isBrigadeMember(brigadeId);
     }
 
   }
