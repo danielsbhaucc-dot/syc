@@ -2,7 +2,7 @@
 import type { Soldier } from './SquadCard';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Bomb, Cross, Crosshair, HeartPulse, ShieldQuestion, User, UserCog, UserCircle, PersonStanding, Shield, RadioTower, Box, PlusMedical } from 'lucide-react';
+import { Bomb, Cross, Crosshair, HeartPulse, ShieldQuestion, User, UserCog, UserCircle, PersonStanding, Shield, RadioTower, Box, PlusCircle } from 'lucide-react';
 
 
 const roleIcons: { [key: string]: React.ReactNode } = {
@@ -10,7 +10,7 @@ const roleIcons: { [key: string]: React.ReactNode } = {
     'מ"כ': <UserCircle className="text-yellow-400" />,
     'סמל': <Shield className="text-blue-400" />,
     'נגביסט': <Crosshair className="text-green-400" />,
-    'חובש': <PlusMedical className="text-red-400" />,
+    'חובש': <PlusCircle className="text-red-400" />,
     'קלע': <Crosshair className="text-green-400" />,
     'חבלן': <Bomb className="text-orange-400" />,
     'קשר': <RadioTower className="text-blue-400" />,
