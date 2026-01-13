@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 export interface PathParams {
     brigadeId: string;
@@ -25,13 +26,12 @@ export interface Soldier {
     id: string;
     name: string;
     role: string;
-    fireteam: string; // Changed to string for flexibility
+    fireteam: string;
     positionInTeam?: number;
     equipment?: string[];
     gap?: string;
 }
 
-// This will now be used as a fallback/default for styling, but is not restrictive.
 const fireteamColors: { [key: string]: string } = {
     chod: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     ratak: 'bg-green-500/20 text-green-400 border-green-500/30',
@@ -51,14 +51,28 @@ function AddSoldierDialog({ squadId, pathParams, existingFireteams }: { squadId:
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [fireteam, setFireteam] = useState<string | undefined>();
+  const [positionInTeam, setPositionInTeam] = useState("");
+  const [equipment, setEquipment] = useState("");
+  const [gap, setGap] = useState("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const firestore = useFirestore();
   const { toast } = useToast();
 
+  const resetForm = () => {
+    setName("");
+    setRole("");
+    setFireteam(undefined);
+    setPositionInTeam("");
+    setEquipment("");
+    setGap("");
+    setOpen(false);
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !role || !fireteam) {
-      toast({ variant: "destructive", title: "שגיאה", description: "יש למלא את כל השדות." });
+      toast({ variant: "destructive", title: "שגיאה", description: "יש למלא שם, תפקיד וחוליה." });
       return;
     }
     setIsSubmitting(true);
@@ -68,15 +82,14 @@ function AddSoldierDialog({ squadId, pathParams, existingFireteams }: { squadId:
         name,
         role,
         fireteam,
-        equipment: [],
+        positionInTeam: positionInTeam ? parseInt(positionInTeam) : null,
+        equipment: equipment.split(',').map(s => s.trim()).filter(Boolean),
+        gap: gap || null,
         squadId,
         ...pathParams,
       });
       toast({ title: "הצלחה", description: "החייל נוסף בהצלחה." });
-      setName("");
-      setRole("");
-      setFireteam(undefined);
-      setOpen(false);
+      resetForm();
     } catch (error) {
       console.error("Error adding soldier:", error);
       toast({ variant: "destructive", title: "שגיאה", description: "אירעה שגיאה בהוספת החייל." });
@@ -93,7 +106,7 @@ function AddSoldierDialog({ squadId, pathParams, existingFireteams }: { squadId:
             הוסף חייל
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+      <DialogContent className="sm:max-w-md" dir="rtl">
         <DialogHeader>
           <DialogTitle>הוספת חייל חדש</DialogTitle>
           <DialogDescription>
@@ -101,7 +114,7 @@ function AddSoldierDialog({ squadId, pathParams, existingFireteams }: { squadId:
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 שם החייל
@@ -132,8 +145,26 @@ function AddSoldierDialog({ squadId, pathParams, existingFireteams }: { squadId:
                     </SelectContent>
                 </Select>
             </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="position" className="text-right">
+                מספר בחוליה
+              </Label>
+              <Input id="position" type="number" value={positionInTeam} onChange={(e) => setPositionInTeam(e.target.value)} className="col-span-3" placeholder='(אופציונלי)' />
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="equipment" className="text-right">
+                ציוד
+              </Label>
+              <Textarea id="equipment" value={equipment} onChange={(e) => setEquipment(e.target.value)} className="col-span-3" placeholder='הזן פריטים מופרדים בפסיק, לדוגמה: M4, כוונת M5, לדרמן'/>
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="gap" className="text-right">
+                פער
+              </Label>
+              <Input id="gap" value={gap} onChange={(e) => setGap(e.target.value)} className="col-span-3" placeholder='תיאור פער (אופציונלי)'/>
+            </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="pt-4">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader className="animate-spin ml-2" /> : null}
               {isSubmitting ? 'מוסיף...' : 'הוסף חייל'}
@@ -170,9 +201,8 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
 
     const existingFireteamNames = Object.keys(fireteams);
     
-    // Determine grid columns dynamically based on number of fireteams
     const numTeams = existingFireteamNames.length;
-    let gridColsClass = 'xl:grid-cols-3'; // Default
+    let gridColsClass = 'xl:grid-cols-3'; 
     if (numTeams === 1) gridColsClass = 'xl:grid-cols-1';
     if (numTeams === 2) gridColsClass = 'xl:grid-cols-2';
     if (numTeams >= 4) gridColsClass = 'xl:grid-cols-4';
