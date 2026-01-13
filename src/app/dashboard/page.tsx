@@ -80,7 +80,7 @@ function DashboardLoading() {
               <Skeleton className="h-7 w-20 mb-2" />
               <Skeleton className="h-3 w-32" />
             </CardContent>
-          </Card>>
+          </Card>
         ))}
       </div>
       <Card>
