@@ -39,46 +39,7 @@ export default function DashboardLayout({
             <span className="font-headline text-lg">מערכת שליטה</span>
           </div>
         </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive
-                tooltip={{ children: "לוח מחוונים" }}
-              >
-                <Link href="/dashboard">
-                  <Home />
-                  <span>לוח מחוונים</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "תבניות" }}>
-                <Link href="/dashboard/templates">
-                  <LayoutTemplate />
-                  <span>תבניות</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "דיווח" }}>
-                <Link href="/dashboard/reporting">
-                  <FileText />
-                  <span>דיווח</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "דוחות" }}>
-                <Link href="/dashboard/reports">
-                  <FileOutput />
-                  <span>דוחות</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarContent>
+        <SidebarContent>התפריט הזה מסתיר את התוכן.</SidebarContent>
         <SidebarSeparator />
         <SidebarFooter>
           <div className="flex w-full items-center justify-between">
