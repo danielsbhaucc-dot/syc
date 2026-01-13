@@ -165,7 +165,7 @@ function AddBattalionDialog({ brigadeId }: { brigadeId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all">
           <PlusCircle className="ml-2" />
           הוסף גדוד
         </Button>
@@ -322,7 +322,7 @@ export default function DashboardPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex justify-between items-center">
+        <CardHeader className="flex justify-between items-center flex-row">
           <CardTitle>סקירת סטטוס גדודים</CardTitle>
           {brigadeId && <AddBattalionDialog brigadeId={brigadeId} />}
         </CardHeader>
@@ -332,7 +332,7 @@ export default function DashboardPage() {
               <Users className="mx-auto h-12 w-12" />
               <h3 className="mt-4 text-lg font-medium">לא נמצאו גדודים</h3>
               <p className="mt-1 text-sm">עדיין לא הוגדרו גדודים עבור חטיבה זו.</p>
-              <div className="mt-4">
+              <div className="mt-6">
                 {brigadeId && <AddBattalionDialog brigadeId={brigadeId} />}
               </div>
             </div>
