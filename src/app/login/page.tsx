@@ -1,7 +1,7 @@
 'use client';
 
-import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,12 +14,36 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
-import { Shield, Users, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowRight, Shield, Users } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useAuth, useUser } from "@/firebase";
+import { initiateEmailSignIn } from "@/firebase/non-blocking-login";
 
 export default function LoginPage() {
-  const [userType, setUserType] = useState<"brigade" | "battalion" | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push("/dashboard");
+    }
+  }, [user, isUserLoading, router]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    initiateEmailSignIn(auth, email, password);
+  };
+  
+  if (isUserLoading || user) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center login-bg">
+        <p>טוען...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center login-bg" dir="rtl">
@@ -34,86 +58,41 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div>
-            <Label className="block text-sm font-bold text-slate-300 mb-3 text-center">בחר סוג משתמש:</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setUserType('brigade')}
-                className={cn(
-                  "p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2",
-                  userType === 'brigade'
-                    ? 'bg-blue-600 border-blue-500 text-white'
-                    : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-blue-500'
-                )}
-              >
-                <Shield className="w-8 h-8" />
-                <span className="font-bold">חטיבה</span>
-              </button>
-              <button
-                onClick={() => setUserType('battalion')}
-                className={cn(
-                  "p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2",
-                  userType === 'battalion'
-                    ? 'bg-emerald-600 border-emerald-500 text-white'
-                    : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-emerald-500'
-                )}
-              >
-                <Users className="w-8 h-8" />
-                <span className="font-bold">גדוד</span>
-              </button>
-            </div>
-          </div>
-          
-          {userType && (
+        <form onSubmit={handleLogin}>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">שם משתמש</Label>
+              <Label htmlFor="email">אימייל</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder={userType === 'brigade' ? 'user@hativa.idf.il' : 'user@gdud.idf.il'}
+                placeholder="user@example.com"
                 required
                 className="bg-slate-800 border-slate-700"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-          )}
 
-          {userType && (
             <div className="space-y-2">
               <Label htmlFor="password">סיסמה</Label>
-              <Input id="password" type="password" required className="bg-slate-800 border-slate-700" />
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                className="bg-slate-800 border-slate-700"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
-          )}
+          </CardContent>
 
-        </CardContent>
-
-        <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full" asChild disabled={!userType}>
-            <Link href="/dashboard">
+          <CardFooter className="flex flex-col gap-4">
+            <Button type="submit" className="w-full">
               <ArrowRight className="ml-2" />
               כניסה
-            </Link>
-          </Button>
-
-          <div className="relative w-full">
-            <Separator className="absolute left-0 top-1/2 w-full bg-slate-700" />
-            <p className="relative z-10 mx-auto w-fit bg-slate-900 px-2 text-center text-xs uppercase text-muted-foreground">
-              או
-            </p>
-          </div>
-
-          <div className="w-full space-y-2 text-center">
-            <Label htmlFor="access-code">כניסה עם קוד לצפייה בלבד</Label>
-            <div className="flex gap-2">
-              <Input
-                id="access-code"
-                placeholder="הכנס קוד גישה"
-                className="bg-slate-800 border-slate-700"
-              />
-              <Button variant="secondary">צפה</Button>
-            </div>
-          </div>
-        </CardFooter>
+            </Button>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );

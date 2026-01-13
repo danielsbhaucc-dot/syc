@@ -1,3 +1,4 @@
+'use client';
 import Link from "next/link";
 import {
   SidebarProvider,
@@ -23,16 +24,37 @@ import {
 import { Logo } from "@/components/logo";
 import { UserNav } from "@/components/user-nav";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useUser } from "@/firebase";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
   const userAvatar = PlaceHolderImages.find((img) => img.id === "user-avatar");
+  
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <p>טוען...</p>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
-      <Sidebar side="right">
+      <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <Logo className="size-7 shrink-0 text-primary" />
@@ -80,12 +102,12 @@ export default function DashboardLayout({
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-2 overflow-hidden">
               <Avatar className="size-8">
-                {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User avatar"/>}
-                <AvatarFallback>BR</AvatarFallback>
+                {user.photoURL && <AvatarImage src={user.photoURL} alt="User avatar"/>}
+                <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col truncate">
-                <span className="text-sm font-medium">מטה חטיבה</span>
-                <span className="text-xs text-muted-foreground">חטיבה 4 (מיל׳)</span>
+                <span className="text-sm font-medium">{user.displayName || 'מטה חטיבה'}</span>
+                <span className="text-xs text-muted-foreground">{user.email}</span>
               </div>
             </div>
             <button>
@@ -99,7 +121,7 @@ export default function DashboardLayout({
           <SidebarTrigger className="md:hidden" />
           <UserNav />
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
+        <main className="flex flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
