@@ -139,7 +139,7 @@ function PlatoonsList({ brigadeId, battalionId, companyId }: { brigadeId: string
                                 <TableCell className="font-medium">{platoon.name}</TableCell>
                                 <TableCell className="text-right">
                                      <Button variant="ghost" size="sm" asChild>
-                                        <Link href={`#`}>
+                                        <Link href={`/dashboard/battalion/${battalionId}/company/${companyId}/platoon/${platoon.id}`}>
                                             ניהול כיתות
                                             <ArrowUpRight className="mr-2 h-4 w-4" />
                                         </Link>
@@ -205,6 +205,9 @@ export default function CompanyPage() {
 
   const battalionId = params.battalionId as string;
   const companyId = params.companyId as string;
+  // This is a simplification. In a real app, you'd probably get the brigadeId
+  // from a different source, maybe stored with the user profile or battalion doc.
+  // For now, we assume the logged-in user's UID is the brigade ID.
   const brigadeId = user?.uid;
 
   const companyRef = useMemoFirebase(() => {
@@ -254,5 +257,3 @@ export default function CompanyPage() {
     </div>
   );
 }
-
-    
