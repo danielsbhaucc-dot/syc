@@ -1,3 +1,5 @@
+// This file is no longer in use now that we are fetching data from Firestore.
+// It can be deleted.
 export type UnitStatus = "Nominal" | "Warning" | "Critical";
 
 export interface Unit {

@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Card,
   CardContent,
@@ -15,7 +17,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { mockUnits, Unit, UnitStatus } from "@/lib/data";
 import {
   Users,
   ShieldCheck,
@@ -23,33 +24,130 @@ import {
   ShieldX,
   Package,
   ArrowUpRight,
+  Loader,
 } from "lucide-react";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { collection, query, where, DocumentData } from "firebase/firestore";
+import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const statusIcons: Record<UnitStatus, React.ReactNode> = {
+// Define interfaces based on backend.json for type safety
+interface Unit {
+  id: string;
+  name: string;
+  commander?: string;
+  status: 'Nominal' | 'Warning' | 'Critical';
+  personnel: {
+    assigned: number;
+    authorized: number;
+  };
+  equipment: {
+    onHand: number;
+    authorized: number;
+  };
+  readiness: number;
+}
+
+const statusIcons: Record<Unit['status'], React.ReactNode> = {
   Nominal: <ShieldCheck className="h-4 w-4 text-green-500" />,
   Warning: <ShieldAlert className="h-4 w-4 text-yellow-500" />,
   Critical: <ShieldX className="h-4 w-4 text-red-500" />,
 };
 
-const statusColors: Record<UnitStatus, string> = {
+const statusColors: Record<Unit['status'], string> = {
   Nominal: "bg-green-500/20 text-green-400 border-green-500/30",
   Warning: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
   Critical: "bg-red-500/20 text-red-400 border-red-500/30",
 };
 
+
+function DashboardLoading() {
+  return (
+    <div className="space-y-8" dir="rtl">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-9 w-48" />
+        <Skeleton className="h-10 w-36" />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+               <Skeleton className="h-4 w-24" />
+               <Skeleton className="h-4 w-4" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-7 w-20 mb-2" />
+              <Skeleton className="h-3 w-32" />
+            </CardContent>
+          </Card>>
+        ))}
+      </div>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-56" />
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                 {[...Array(7)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[...Array(5)].map((_, i) => (
+                <TableRow key={i}>
+                  {[...Array(7)].map((_, j) => <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>)}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 export default function DashboardPage() {
-  const totalPersonnel = mockUnits.reduce(
-    (acc, unit) => acc + unit.personnel.assigned,
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  // Assuming user has a custom claim 'brigadeId'
+  const brigadeId = 'default_brigade'; // Replace with user's actual brigadeId
+
+  const battalionsQuery = useMemoFirebase(() => {
+    if (!firestore || !brigadeId) return null;
+    // Query for battalions that belong to the user's brigade
+    // Note: The path is derived from `docs/backend.json`
+    return query(
+      collection(firestore, 'brigades', brigadeId, 'battalions')
+    );
+  }, [firestore, brigadeId]);
+
+  const { data: battalions, isLoading, error } = useCollection<Unit>(battalionsQuery);
+  
+  if (isLoading || !battalions) {
+    return <DashboardLoading />;
+  }
+  
+  if (error) {
+    return <div className="text-red-500">שגיאה בטעינת הנתונים: {error.message}</div>
+  }
+
+  const totalPersonnel = battalions.reduce(
+    (acc, unit) => acc + (unit.personnel?.assigned || 0),
     0
   );
-  const totalEquipment = mockUnits.reduce(
-    (acc, unit) => acc + unit.equipment.onHand,
+  const totalEquipment = battalions.reduce(
+    (acc, unit) => acc + (unit.equipment?.onHand || 0),
     0
   );
   const overallReadiness =
-    mockUnits.reduce((acc, unit) => acc + unit.readiness, 0) /
-    mockUnits.length;
-  const criticalAlerts = mockUnits.filter(
+    battalions.length > 0
+      ? battalions.reduce((acc, unit) => acc + (unit.readiness || 0), 0) /
+        battalions.length
+      : 0;
+  const criticalAlerts = battalions.filter(
     (unit) => unit.status === "Critical"
   ).length;
 
@@ -120,6 +218,13 @@ export default function DashboardPage() {
           <CardTitle>סקירת סטטוס גדודים</CardTitle>
         </CardHeader>
         <CardContent>
+          {battalions.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="mx-auto h-12 w-12" />
+              <h3 className="mt-4 text-lg font-medium">לא נמצאו גדודים</h3>
+              <p className="mt-1 text-sm">עדיין לא הוגדרו גדודים עבור חטיבה זו.</p>
+            </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -133,10 +238,10 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockUnits.map((unit: Unit) => (
+              {battalions.map((unit) => (
                 <TableRow key={unit.id}>
                   <TableCell className="font-medium">{unit.name}</TableCell>
-                  <TableCell>{unit.commander}</TableCell>
+                  <TableCell>{unit.commander || 'לא שויך'}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
@@ -147,10 +252,10 @@ export default function DashboardPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {unit.personnel.assigned} / {unit.personnel.authorized}
+                    {unit.personnel?.assigned || 0} / {unit.personnel?.authorized || 0}
                   </TableCell>
                   <TableCell>
-                    {unit.equipment.onHand} / {unit.equipment.authorized}
+                    {unit.equipment?.onHand || 0} / {unit.equipment?.authorized || 0}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -161,15 +266,18 @@ export default function DashboardPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      פרטים
-                      <ArrowUpRight className="mr-2 h-4 w-4" />
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href={`/dashboard/battalion/${unit.id}`}>
+                        פרטים
+                        <ArrowUpRight className="mr-2 h-4 w-4" />
+                      </Link>
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>
