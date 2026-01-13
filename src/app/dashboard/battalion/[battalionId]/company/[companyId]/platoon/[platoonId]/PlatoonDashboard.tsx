@@ -76,14 +76,14 @@ export function PlatoonDashboard({ platoonName, squads, soldiers, pathParams, is
 
   return (
     <div className="w-full space-y-10">
-       <header className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-center rounded-2xl border border-slate-700 bg-[#1e293b] p-4 md:p-6 shadow-2xl">
-         <div className="lg:col-span-3">
-            <h1 className="text-3xl font-black text-white italic tracking-tighter">{platoonName}</h1>
-            <p className="text-blue-400 font-bold mt-1">פלוגת חוד | תמונת מצב אמת</p>
+       <header className="flex flex-col lg:flex-row gap-4 md:gap-6 items-center rounded-2xl border border-slate-700 bg-[#1e293b] p-4 md:p-6 shadow-2xl">
+         <div className="flex-shrink-0">
+            <h1 className="text-3xl font-black text-white italic tracking-tighter text-center lg:text-right">{platoonName}</h1>
+            <p className="text-blue-400 font-bold mt-1 text-center lg:text-right">פלוגת חוד | תמונת מצב אמת</p>
         </div>
 
-        <div className="lg:col-span-9 bg-slate-900/50 p-4 rounded-xl border border-slate-700">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center sm:divide-x sm:divide-x-reverse sm:divide-slate-700">
+        <div className="w-full bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center md:divide-x md:divide-x-reverse md:divide-slate-700">
                 <div className="flex flex-col justify-center px-2 space-y-1">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">נשק מחלקתי</span>
                     <div className="text-sm font-bold text-white">{stats.m4} יח' M4</div>
@@ -104,7 +104,7 @@ export function PlatoonDashboard({ platoonName, squads, soldiers, pathParams, is
                     <div className="text-sm font-bold text-blue-400">{stats.matol} מטול | {stats.law} לאו</div>
                     <div className="text-sm font-bold text-blue-400">{stats.matador} מטאדור</div>
                 </div>
-                 <div className="flex flex-col justify-center px-2 space-y-1 col-span-1 sm:col-span-2 md:col-span-1">
+                 <div className="flex flex-col justify-center px-2 space-y-1 col-span-2 md:col-span-1">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">ציוד פרט</span>
                     <div className={`text-sm font-bold ${stats.ullarin >= stats.totalSoldiers ? 'text-green-500' : 'text-red-500'}`}>{stats.ullarin}/{stats.totalSoldiers} אולרים</div>
                     <div className={`text-sm font-bold ${stats.panas >= stats.totalSoldiers ? 'text-green-500' : 'text-red-500'}`}>{stats.panas}/{stats.totalSoldiers} פנסי ראש</div>

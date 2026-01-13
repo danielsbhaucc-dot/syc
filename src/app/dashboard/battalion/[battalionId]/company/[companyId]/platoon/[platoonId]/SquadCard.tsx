@@ -235,7 +235,7 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
                 </div>
             )}
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6 mt-4">
                {Object.entries(fireteams).map(([fireteamName, teamSoldiers]) => {
                  if (teamSoldiers.length === 0) return null;
                  const teamStyle = getFireteamStyle(fireteamName);
