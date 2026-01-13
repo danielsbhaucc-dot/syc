@@ -3,18 +3,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK
-// This should be done only once.
-if (!admin.apps.length) {
+// Helper function to initialize Firebase Admin SDK safely
+function initializeFirebaseAdmin() {
+    if (admin.apps.length > 0) {
+        return admin.app();
+    }
+
     try {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
-        admin.initializeApp({
+        return admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         });
     } catch (error) {
         console.error('Firebase Admin Initialization Error:', error);
+        // We throw an error during initialization because the API cannot function without it.
+        throw new Error('Failed to initialize Firebase Admin SDK. Please check service account credentials.');
     }
 }
+
+// Initialize it once when the module is loaded
+const adminApp = initializeFirebaseAdmin();
+const adminAuth = admin.auth(adminApp);
+const adminFirestore = admin.firestore(adminApp);
 
 
 export async function POST(req: NextRequest) {
@@ -25,8 +35,6 @@ export async function POST(req: NextRequest) {
         if (!email || !password || !brigadeId || !battalionId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
-
-        const auth = admin.auth();
         
         // TODO: Verify that the requesting user is an admin of the brigadeId.
         // This requires getting the UID of the requester from their ID token,
@@ -34,7 +42,7 @@ export async function POST(req: NextRequest) {
         // proceed with the creation but this is a critical security step.
 
         // Create the user in Firebase Auth
-        const userRecord = await auth.createUser({
+        const userRecord = await adminAuth.createUser({
             email,
             password,
             emailVerified: true,
@@ -42,15 +50,14 @@ export async function POST(req: NextRequest) {
         });
 
         // Set custom claims to store role and unit info directly on the auth token
-        await auth.setCustomUserClaims(userRecord.uid, {
+        await adminAuth.setCustomUserClaims(userRecord.uid, {
             role: 'battalion',
             brigadeId: brigadeId,
             battalionId: battalionId,
         });
         
         // Also, add the user to the brigade's members list for rule consistency
-        const db = admin.firestore();
-        const brigadeRef = db.doc(`brigades/${brigadeId}`);
+        const brigadeRef = adminFirestore.doc(`brigades/${brigadeId}`);
         await brigadeRef.update({
             [`members.${userRecord.uid}`]: 'battalion'
         });
