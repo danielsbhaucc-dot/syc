@@ -1,0 +1,180 @@
+/**
+ * Core Philosophy: This ruleset enforces a strict "Brigade Membership" security model.
+ * All data access is governed by a user's membership within a specific brigade.
+ * Users who are not members of a brigade have no access to that brigade's data.
+ *
+ * Data Structure: The entire Firestore database is organized hierarchically under the
+ * top-level `/brigades` collection. All other data, such as battalions, templates,
+ * and personnel, are stored in subcollections under their parent brigade.
+ *
+ * Key Security Decisions:
+ * - Brigade Membership: Access control is critically dependent on a `members` map
+ *   field on each `/brigades/{brigadeId}` document. This map should store user UIDs
+ *   as keys and their roles as values (e.g., `{ members: { 'user-uid-123': 'admin' } }`).
+ *   This data must be maintained by the application's backend logic.
+ * - Granular Access: Any authenticated user can create a new brigade and is
+ *   automatically designated as its first member. Within a brigade, all members
+ *   are granted read and write access to facilitate rapid prototyping. Future
+ *   iterations should introduce role-based checks (e.g., only 'admins' can delete).
+ * - No Public Data: There are no publicly readable collections. A user must be
+ *   signed in and be a member of a brigade to read any data.
+ * - No User Listing: The rules do not permit listing all users or all brigades.
+ *
+ * Denormalization for Authorization: To ensure fast and secure access checks, this
+ * model relies on two key denormalization patterns:
+ * 1. Brigade Membership Map: As described above, the `members` map on the brigade
+ *    document is essential, avoiding complex queries to determine user access.
+ * 2. Relational IDs: Subcollection documents (like Battalion or Template) must store
+ *    their parent `brigadeId`. The rules enforce the integrity and immutability of
+ *    this ID to prevent documents from being moved between brigades.
+ *
+ * Structural Segregation: The data model naturally segregates data by brigade, with
+ * distinct subcollections for battalions, templates, etc. This simplifies rule logic,
+ * as a single check for brigade membership can grant access to an entire data tree.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helper Functions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns true if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the requesting user is a member of the specified brigade.
+     * This requires a 'members' map on the brigade document.
+     * Example: brigadeDoc.data.members == { 'user-uid-abc': 'admin', ... }
+     */
+    function isBrigadeMember(brigadeId) {
+      return isSignedIn() && get(/databases/$(database)/documents/brigades/$(brigadeId)).data.members[request.auth.uid] != null;
+    }
+
+    /**
+     * A robust check for update/delete operations, ensuring the document exists
+     * and the user is a member of the brigade.
+     */
+    function isExistingBrigadeMember(brigadeId) {
+      return resource != null && isBrigadeMember(brigadeId);
+    }
+
+    /**
+     * Validates that the user creating a brigade adds themselves to the members list.
+     * This is crucial for establishing initial ownership.
+     */
+    function isInitialBrigadeCreator() {
+      let incomingMembers = request.resource.data.members;
+      return isSignedIn() && incomingMembers[request.auth.uid] != null;
+    }
+
+    /**
+     * On create, validates that a denormalized foreign key in the document data
+     * matches the ID from the document path.
+     */
+    function hasValidForeignKey(key, value) {
+      return request.resource.data[key] == value;
+    }
+
+    /**
+     * On update, ensures a denormalized foreign key is immutable and cannot be changed.
+     */
+    function isForeignKeyImmutable(key) {
+      return request.resource.data[key] == resource.data[key];
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Collection Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to Brigade documents, the root of all other data.
+     * @path /brigades/{brigadeId}
+     * @allow (create) Any signed-in user creating a brigade and adding themselves as a member.
+     * @deny (get) A user trying to read a brigade document they are not a member of.
+     * @principle Establishes the "Brigade Membership" model for all nested data.
+     */
+    match /brigades/{brigadeId} {
+      allow get, list: if isBrigadeMember(brigadeId);
+      allow create: if isInitialBrigadeCreator();
+      allow update, delete: if isExistingBrigadeMember(brigadeId);
+    }
+
+    /**
+     * @description Controls access to Battalions within a Brigade.
+     * @path /brigades/{brigadeId}/battalions/{battalionId}
+     * @allow (get, list, create) Any member of the parent brigade.
+     * @deny (create) A brigade member trying to create a battalion with a mismatched 'brigadeId' field.
+     * @principle Inherits access from the parent Brigade document, enforcing relational integrity.
+     */
+    match /brigades/{brigadeId}/battalions/{battalionId} {
+      allow get, list: if isBrigadeMember(brigadeId);
+      allow create: if isBrigadeMember(brigadeId) && hasValidForeignKey('brigadeId', brigadeId);
+      allow update: if isExistingBrigadeMember(brigadeId) && isForeignKeyImmutable('brigadeId');
+      allow delete: if isExistingBrigadeMember(brigadeId);
+    }
+
+    /**
+     * @description Controls access to Templates within a Brigade.
+     * @path /brigades/{brigadeId}/templates/{templateId}
+     * @allow (get, list, create) Any member of the parent brigade.
+     * @deny (update) A brigade member trying to change the immutable 'brigadeId' field.
+     * @principle Inherits access from the parent Brigade document, enforcing relational integrity.
+     */
+    match /brigades/{brigadeId}/templates/{templateId} {
+      allow get, list: if isBrigadeMember(brigadeId);
+      allow create: if isBrigadeMember(brigadeId) && hasValidForeignKey('brigadeId', brigadeId);
+      allow update: if isExistingBrigadeMember(brigadeId) && isForeignKeyImmutable('brigadeId');
+      allow delete: if isExistingBrigadeMember(brigadeId);
+    }
+
+    /**
+     * @description Controls access to Roles within a Template.
+     * @path /brigades/{brigadeId}/templates/{templateId}/roles/{roleId}
+     * @allow (get, list, create) Any member of the grandparent brigade.
+     * @deny (create) A brigade member trying to create a role with a mismatched 'templateId' field.
+     * @principle Inherits access from the grandparent Brigade, enforcing relational integrity with the parent Template.
+     */
+    match /brigades/{brigadeId}/templates/{templateId}/roles/{roleId} {
+      allow get, list: if isBrigadeMember(brigadeId);
+      allow create: if isBrigadeMember(brigadeId) && hasValidForeignKey('templateId', templateId);
+      allow update: if isExistingBrigadeMember(brigadeId) && isForeignKeyImmutable('templateId');
+      allow delete: if isExistingBrigadeMember(brigadeId);
+    }
+
+    /**
+     * @description Controls access to Personnel within a Battalion.
+     * @path /brigades/{brigadeId}/battalions/{battalionId}/personnel/{personnelId}
+     * @allow (get, list, create) Any member of the great-grandparent brigade.
+     * @deny (create) A brigade member trying to create a personnel doc with a mismatched 'battalionId'.
+     * @principle Inherits access from the great-grandparent Brigade, enforcing relational integrity with the parent Battalion.
+     */
+    match /brigades/{brigadeId}/battalions/{battalionId}/personnel/{personnelId} {
+      allow get, list: if isBrigadeMember(brigadeId);
+      allow create: if isBrigadeMember(brigadeId) && hasValidForeignKey('battalionId', battalionId);
+      allow update: if isExistingBrigadeMember(brigadeId) && isForeignKeyImmutable('battalionId');
+      allow delete: if isExistingBrigadeMember(brigadeId);
+    }
+
+    /**
+     * @description Controls access to Gap Analyses within a Battalion.
+     * @path /brigades/{brigadeId}/battalions/{battalionId}/gapAnalyses/{gapAnalysisId}
+     * @allow (get, list, create) Any member of the great-grandparent brigade.
+     * @deny (update) A brigade member trying to change the immutable 'battalionId' of an existing analysis.
+     * @principle Inherits access from the great-grandparent Brigade, enforcing relational integrity with the parent Battalion.
+     */
+    match /brigades/{brigadeId}/battalions/{battalionId}/gapAnalyses/{gapAnalysisId} {
+      allow get, list: if isBrigadeMember(brigadeId);
+      allow create: if isBrigadeMember(brigadeId) && hasValidForeignKey('battalionId', battalionId);
+      allow update: if isExistingBrigadeMember(brigadeId) && isForeignKeyImmutable('battalionId');
+      allow delete: if isExistingBrigadeMember(brigadeId);
+    }
+
+  }
+}

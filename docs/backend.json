@@ -1,0 +1,337 @@
+{
+  "entities": {
+    "Brigade": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Brigade",
+      "type": "object",
+      "description": "Represents a brigade, the highest level unit managing templates and overall readiness.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Brigade entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the brigade."
+        },
+        "location": {
+          "type": "string",
+          "description": "Geographical location of the brigade."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Battalion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Battalion",
+      "type": "object",
+      "description": "Represents a battalion, reporting readiness status to a brigade.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Battalion entity."
+        },
+        "brigadeId": {
+          "type": "string",
+          "description": "Reference to Brigade. (Relationship: Brigade 1:N Battalion)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the battalion."
+        },
+        "location": {
+          "type": "string",
+          "description": "Geographical location of the battalion."
+        }
+      },
+      "required": [
+        "id",
+        "brigadeId",
+        "name"
+      ]
+    },
+    "Template": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Template",
+      "type": "object",
+      "description": "Defines the required roles, authorizations, and equipment for a specific unit type.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Template entity."
+        },
+        "brigadeId": {
+          "type": "string",
+          "description": "Reference to Brigade. (Relationship: Brigade 1:N Template)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the template."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the template's purpose."
+        }
+      },
+      "required": [
+        "id",
+        "brigadeId",
+        "name"
+      ]
+    },
+    "Role": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Role",
+      "type": "object",
+      "description": "Represents a role defined within a template.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Role entity."
+        },
+        "templateId": {
+          "type": "string",
+          "description": "Reference to Template. (Relationship: Template 1:N Role)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the role."
+        },
+        "requiredAuthorizations": {
+          "type": "string",
+          "description": "Required authorizations for the role."
+        },
+        "requiredEquipment": {
+          "type": "string",
+          "description": "Required equipment for the role."
+        }
+      },
+      "required": [
+        "id",
+        "templateId",
+        "name"
+      ]
+    },
+    "Personnel": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Personnel",
+      "type": "object",
+      "description": "Represents a member of the personnel.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Personnel entity."
+        },
+        "battalionId": {
+          "type": "string",
+          "description": "Reference to Battalion. (Relationship: Battalion 1:N Personnel)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the personnel."
+        },
+        "roleId": {
+          "type": "string",
+          "description": "Reference to Role. (Relationship: Role 1:N Personnel)"
+        },
+        "authorizations": {
+          "type": "string",
+          "description": "Current authorizations of the personnel."
+        },
+        "equipment": {
+          "type": "string",
+          "description": "Equipment assigned to the personnel."
+        }
+      },
+      "required": [
+        "id",
+        "battalionId",
+        "name"
+      ]
+    },
+    "GapAnalysis": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GapAnalysis",
+      "type": "object",
+      "description": "Represents the discrepancies between the template and actual status.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the GapAnalysis entity."
+        },
+        "battalionId": {
+          "type": "string",
+          "description": "Reference to Battalion. (Relationship: Battalion 1:N GapAnalysis)"
+        },
+        "templateId": {
+          "type": "string",
+          "description": "Reference to Template. (Relationship: Template 1:N GapAnalysis)"
+        },
+        "personnelGaps": {
+          "type": "string",
+          "description": "Description of the personnel gaps."
+        },
+        "authorizationGaps": {
+          "type": "string",
+          "description": "Description of the authorization gaps."
+        },
+        "equipmentGaps": {
+          "type": "string",
+          "description": "Description of the equipment gaps."
+        },
+        "analysisDate": {
+          "type": "string",
+          "description": "Date the gap analysis was performed.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "battalionId",
+        "templateId"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/brigades/{brigadeId}",
+        "definition": {
+          "entityName": "Brigade",
+          "schema": {
+            "$ref": "#/backend/entities/Brigade"
+          },
+          "description": "Represents a brigade.  The root level for organizing templates and battalions.",
+          "params": [
+            {
+              "name": "brigadeId",
+              "description": "The unique identifier for the brigade."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/brigades/{brigadeId}/battalions/{battalionId}",
+        "definition": {
+          "entityName": "Battalion",
+          "schema": {
+            "$ref": "#/backend/entities/Battalion"
+          },
+          "description": "Represents a battalion within a brigade. Includes denormalized 'brigadeId' for authorization independence.",
+          "params": [
+            {
+              "name": "brigadeId",
+              "description": "The unique identifier for the brigade."
+            },
+            {
+              "name": "battalionId",
+              "description": "The unique identifier for the battalion."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/brigades/{brigadeId}/templates/{templateId}",
+        "definition": {
+          "entityName": "Template",
+          "schema": {
+            "$ref": "#/backend/entities/Template"
+          },
+          "description": "Represents a template defined by a brigade. Includes denormalized 'brigadeId' for authorization independence.",
+          "params": [
+            {
+              "name": "brigadeId",
+              "description": "The unique identifier for the brigade."
+            },
+            {
+              "name": "templateId",
+              "description": "The unique identifier for the template."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/brigades/{brigadeId}/templates/{templateId}/roles/{roleId}",
+        "definition": {
+          "entityName": "Role",
+          "schema": {
+            "$ref": "#/backend/entities/Role"
+          },
+          "description": "Represents a role within a template. Includes denormalized 'brigadeId' and 'templateId' for authorization independence.",
+          "params": [
+            {
+              "name": "brigadeId",
+              "description": "The unique identifier for the brigade."
+            },
+            {
+              "name": "templateId",
+              "description": "The unique identifier for the template."
+            },
+            {
+              "name": "roleId",
+              "description": "The unique identifier for the role."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/brigades/{brigadeId}/battalions/{battalionId}/personnel/{personnelId}",
+        "definition": {
+          "entityName": "Personnel",
+          "schema": {
+            "$ref": "#/backend/entities/Personnel"
+          },
+          "description": "Represents personnel assigned to a battalion. Includes denormalized 'brigadeId' and 'battalionId' for authorization independence.",
+          "params": [
+            {
+              "name": "brigadeId",
+              "description": "The unique identifier for the brigade."
+            },
+            {
+              "name": "battalionId",
+              "description": "The unique identifier for the battalion."
+            },
+            {
+              "name": "personnelId",
+              "description": "The unique identifier for the personnel."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/brigades/{brigadeId}/battalions/{battalionId}/gapAnalyses/{gapAnalysisId}",
+        "definition": {
+          "entityName": "GapAnalysis",
+          "schema": {
+            "$ref": "#/backend/entities/GapAnalysis"
+          },
+          "description": "Represents a gap analysis for a battalion, linked to a template. Includes denormalized 'brigadeId', 'battalionId', and 'templateId' for authorization independence.",
+          "params": [
+            {
+              "name": "brigadeId",
+              "description": "The unique identifier for the brigade."
+            },
+            {
+              "name": "battalionId",
+              "description": "The unique identifier for the battalion."
+            },
+            {
+              "name": "gapAnalysisId",
+              "description": "The unique identifier for the gap analysis."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the TroopSync application's core features, focusing on template management, automated gap analysis, battalion reporting, role assignment, and user authentication/authorization. The structure prioritizes authorization independence by denormalizing authorization-related data.  The design employs structural segregation to ensure homogeneous security postures within collections.  Access modeling leverages path-based ownership and membership maps for collaborative data. \n\nTo ensure Authorization Independence (Strategy A), key authorization data, such as the brigadeId, is denormalized into subcollections where access depends on it. This avoids the need for `get()` calls in security rules, enabling atomic operations.\n\nStructural Segregation (Strategy B) is enforced by separating data with different access requirements into distinct collections.  For example, brigade-owned data (templates) are stored separately from battalion-specific data (gap analyses and personnel). This simplifies the security rules.\n\nAccess Modeling (Strategy C) utilizes hierarchical paths for user-owned data (e.g., `/brigades/{brigadeId}/templates/{templateId}`) and standardizes on membership maps where appropriate.  Path-based ownership enforces strict ownership, and role-based access control (DBAC) can be implemented with a dedicated `/roles` collection.\n\nThe data structure supports the required QAPs by using segregation and path-based ownership for secure list operations. For example, listing templates is restricted to brigade members via the `brigades/{brigadeId}/templates` collection. Similarly, battalion-specific data is secured under the `/brigades/{brigadeId}/battalions/{battalionId}` path."
+  }
+}
