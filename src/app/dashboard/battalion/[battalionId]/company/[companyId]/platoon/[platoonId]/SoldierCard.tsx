@@ -46,7 +46,7 @@ export function SoldierCard({ soldier }: { soldier: Soldier }) {
     const hasGap = soldier.gap && soldier.gap.length > 0;
 
     return (
-        <div className={`relative flex min-h-[220px] flex-col items-center rounded-xl border bg-background p-3 text-center shadow-lg transition-all hover:-translate-y-1 hover:border-primary/80 ${hasGap ? 'border-red-500/50 bg-red-900/20' : 'border-slate-700'}`}>
+        <div className={`relative flex min-h-[240px] flex-col items-center rounded-xl border bg-background p-3 text-center shadow-lg transition-all hover:-translate-y-1 hover:border-primary/80 ${hasGap ? 'border-red-500/50 bg-red-900/20' : 'border-slate-700'}`}>
             <div className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md bg-slate-700 text-xs font-bold border border-slate-600">
                 {soldier.positionInTeam || '?'}
             </div>

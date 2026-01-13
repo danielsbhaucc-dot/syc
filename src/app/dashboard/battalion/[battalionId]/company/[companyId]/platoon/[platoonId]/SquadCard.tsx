@@ -36,7 +36,7 @@ const fireteamColors: { [key: string]: { bg: string, text: string, border: strin
     chod: { bg: 'bg-blue-900/30', text: 'text-blue-300', border: 'border-blue-700' },
     ratak: { bg: 'bg-green-900/30', text: 'text-green-300', border: 'border-green-700' },
     cmd: { bg: 'bg-slate-800/50', text: 'text-slate-300', border: 'border-slate-600' },
-    hq: { bg: 'bg-slate-800/50', text: 'text-slate-300', border: 'border-slate-600' },
+    hq: { bg: 'bg-yellow-900/30', text: 'text-yellow-300', border: 'border-yellow-700' },
     sabotage: { bg: 'bg-orange-900/30', text: 'text-orange-300', border: 'border-orange-700' },
     default: { bg: 'bg-gray-800/50', text: 'text-gray-300', border: 'border-gray-600' },
 };
@@ -196,12 +196,13 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
             return acc;
         }, {} as Record<string, Soldier[]>);
 
-        // Sort fireteams: חוד, then רתק, then פיקוד
         const sortedKeys = Object.keys(teams).sort((a, b) => {
             if (a.includes('חוד')) return -1;
             if (b.includes('חוד')) return 1;
             if (a.includes('רתק')) return -1;
             if (b.includes('רתק')) return 1;
+            if (a.includes('פיקוד')) return -1;
+            if (b.includes('פיקוד')) return 1;
             return 0;
         });
 
@@ -215,15 +216,8 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
 
     const existingFireteamNames = Object.keys(fireteams);
     
-    const numTeams = existingFireteamNames.length;
-    let gridColsClass = 'xl:grid-cols-3'; 
-    if (numTeams === 1) gridColsClass = 'xl:grid-cols-1';
-    if (numTeams === 2) gridColsClass = 'xl:grid-cols-2';
-    if (numTeams >= 4) gridColsClass = 'xl:grid-cols-4';
-
-
     return (
-        <div className="relative mb-10 rounded-2xl border border-slate-700 bg-[#1e293b] p-6 pt-10 shadow-lg">
+        <div className="relative mb-10 rounded-2xl border border-slate-700 bg-[#1e293b] p-4 md:p-6 pt-10 shadow-lg">
             <div className="absolute -top-4 right-6 bg-primary text-primary-foreground px-4 py-1 rounded-lg text-lg font-bold shadow-md border-2 border-[#1e293b]">
                 {squad.name} (מ"כ: {squad.commanderName})
             </div>
@@ -241,7 +235,7 @@ export function SquadCard({ squad, pathParams }: { squad: Squad, pathParams: Pat
                 </div>
             )}
             
-            <div className={`grid grid-cols-1 ${gridColsClass} gap-6 mt-4`}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
                {Object.entries(fireteams).map(([fireteamName, teamSoldiers]) => {
                  if (teamSoldiers.length === 0) return null;
                  const teamStyle = getFireteamStyle(fireteamName);

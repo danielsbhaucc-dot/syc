@@ -80,7 +80,7 @@ function AddSquadDialog({ brigadeId, battalionId, companyId, platoonId }: { brig
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size="sm">
           <PlusCircle className="ml-2" />
           הוסף כיתה
         </Button>
@@ -147,11 +147,10 @@ function SquadsListContainer({ brigadeId, battalionId, companyId, platoonId }: {
     useEffect(() => {
         if (!firestore || !platoonId) return;
 
-        const fetchSquadsAndSoldiers = async () => {
-            setIsLoading(true);
+        const squadsCollection = collection(firestore, 'brigades', brigadeId, 'battalions', battalionId, 'companies', companyId, 'platoons', platoonId, 'squads');
+        const unsubscribe = onSnapshot(squadsCollection, async (squadSnapshot) => {
+             setIsLoading(true);
             try {
-                const squadsCollection = collection(firestore, 'brigades', brigadeId, 'battalions', battalionId, 'companies', companyId, 'platoons', platoonId, 'squads');
-                const squadSnapshot = await getDocs(squadsCollection);
                 const squads = squadSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Omit<Squad, 'soldiers'>[];
 
                 const allSoldiers: Soldier[] = [];
@@ -175,9 +174,9 @@ function SquadsListContainer({ brigadeId, battalionId, companyId, platoonId }: {
             } finally {
                 setIsLoading(false);
             }
-        };
+        });
 
-        fetchSquadsAndSoldiers();
+        return () => unsubscribe();
     }, [firestore, brigadeId, battalionId, companyId, platoonId]);
     
     if (error) {
@@ -255,7 +254,7 @@ export default function PlatoonPage() {
 
   return (
     <div className="space-y-8 w-full" dir="rtl">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <Link href={`/dashboard/battalion/${battalionId}/company/${companyId}`} className="text-sm text-blue-400 hover:underline">
             <div className='flex items-center'>
