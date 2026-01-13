@@ -4,19 +4,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/logo";
 import { ArrowLeft, UserPlus, Shield } from "lucide-react";
 import { useAuth, useUser, useFirestore } from "@/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +21,8 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [brigadeName, setBrigadeName] = useState("");
+
   const auth = useAuth();
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
@@ -40,6 +37,14 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!brigadeName) {
+        toast({
+            variant: "destructive",
+            title: "שגיאה",
+            description: "יש להזין שם חטיבה.",
+        });
+        return;
+    }
     if (password !== confirmPassword) {
       toast({
         variant: "destructive",
@@ -49,15 +54,19 @@ export default function SignupPage() {
       return;
     }
     if (!auth || !firestore) return;
+    
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
 
+      // Set the user's display name to the brigade name
+      await updateProfile(newUser, { displayName: brigadeName });
+
       // Create a brigade for the new user.
-      // The brigade ID will be the user's UID for simplicity.
+      // The brigade ID will be the user's UID. This user is the admin.
       const brigadeRef = doc(firestore, "brigades", newUser.uid);
       await setDoc(brigadeRef, {
-        name: `החטיבה של ${newUser.email}`,
+        name: brigadeName,
         location: "לא צוין",
         // Add the user as the first member with an 'admin' role.
         members: {
@@ -65,11 +74,15 @@ export default function SignupPage() {
         },
       });
 
+      // Store user type in local storage to use it across the app
+      localStorage.setItem('userType', 'brigade');
+
       toast({
         title: "ההרשמה הצליחה!",
-        description: "כעת תועבר למסך הכניסה.",
+        description: "יצרת בהצלחה חטיבה חדשה. כעת תועבר למסך הכניסה.",
       });
       router.push('/login');
+
     } catch (error) {
       let description = "אירעה שגיאה לא צפויה.";
       if (error instanceof FirebaseError) {
@@ -108,14 +121,26 @@ export default function SignupPage() {
       <div className="bg-slate-800/90 backdrop-blur-lg border border-slate-700 rounded-2xl shadow-2xl p-8 md:p-12 max-w-md w-full">
         <div className="text-center mb-8">
             <Shield className="w-20 h-20 mx-auto text-blue-500 mb-4" />
-            <h1 className="text-4xl font-black text-white mb-2 font-headline tracking-tighter">יצירת משתמש חדש</h1>
-            <p className="text-slate-400 font-semibold">הצטרף למערכת ניהול ומעקב פערים</p>
+            <h1 className="text-4xl font-black text-white mb-2 font-headline tracking-tighter">יצירת חטיבה חדשה</h1>
+            <p className="text-slate-400 font-semibold">משתמש זה יוגדר כמנהל הראשי של החטיבה</p>
         </div>
 
         <form onSubmit={handleSignup}>
           <CardContent className="space-y-4 p-0">
+             <div className="space-y-2">
+              <Label htmlFor="brigadeName">שם החטיבה</Label>
+              <Input
+                id="brigadeName"
+                type="text"
+                placeholder="לדוגמה: חטיבת גולני"
+                required
+                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                value={brigadeName}
+                onChange={(e) => setBrigadeName(e.target.value)}
+              />
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="email">אימייל</Label>
+              <Label htmlFor="email">אימייל מנהל החטיבה</Label>
               <Input
                 id="email"
                 type="email"
@@ -133,7 +158,7 @@ export default function SignupPage() {
                 id="password" 
                 type="password" 
                 required 
-                placeholder="בחר סיסמה"
+                placeholder="בחר סיסמה (לפחות 6 תווים)"
                 className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -157,7 +182,7 @@ export default function SignupPage() {
           <CardFooter className="flex flex-col gap-4 p-0 pt-6">
             <Button type="submit" className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-lg transition-all shadow-lg">
               <UserPlus className="ml-2" />
-              הרשמה
+              צור חטיבה והירשם
             </Button>
             <Button variant="outline" className="w-full" asChild>
               <Link href="/login">

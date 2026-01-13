@@ -16,7 +16,7 @@ import { FirebaseError } from "firebase/app";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState<"brigade" | "battalion" | null>(null);
+  // User type selection is removed for now, login will determine role.
   
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -25,24 +25,25 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
+      // The dashboard page will handle redirection based on user role.
       router.push("/dashboard");
     }
   }, [user, isUserLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth || !userType) {
+    if (!auth) {
         toast({
             variant: "destructive",
             title: "שגיאה",
-            description: "אנא בחר סוג משתמש (חטיבה/גדוד).",
+            description: "שירותי האימות לא אותחלו כראוי.",
         });
         return;
     }
     try {
         await signInWithEmailAndPassword(auth, email, password);
-        // Store user type in local storage to use it across the app
-        localStorage.setItem('userType', userType);
+        // We will determine user type on the dashboard page based on their permissions.
+        // No need to set it in local storage anymore for this simplified flow.
         router.push("/dashboard");
     } catch (error) {
         let description = "שם המשתמש או הסיסמה שהזנת אינם נכונים.";
@@ -80,34 +81,6 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin}>
             <div className="space-y-6">
-                <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-3">בחר סוג משתמש:</label>
-                    <div className="grid grid-cols-2 gap-3">
-                    <button
-                        type="button"
-                        onClick={() => setUserType('brigade')}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                        userType === 'brigade'
-                            ? 'bg-blue-600 border-blue-500 text-white'
-                            : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-blue-500'
-                        }`}>
-                        <Shield className="w-8 h-8 mx-auto mb-2" />
-                        <div className="text-sm font-bold">חטיבה</div>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setUserType('battalion')}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                        userType === 'battalion'
-                            ? 'bg-emerald-600 border-emerald-500 text-white'
-                            : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-emerald-500'
-                        }`}>
-                        <Users className="w-8 h-8 mx-auto mb-2" />
-                        <div className="text-sm font-bold">גדוד</div>
-                    </button>
-                    </div>
-                </div>
-                
                 <div className="space-y-2">
                     <Label htmlFor="email">אימייל</Label>
                     <Input
@@ -136,19 +109,20 @@ export default function LoginPage() {
 
                 <Button 
                     type="submit" 
-                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold rounded-lg transition-all disabled:cursor-not-allowed shadow-lg"
-                    disabled={!userType}
+                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-lg transition-all shadow-lg"
                 >
                     <ArrowRight className="ml-2" />
                     כניסה למערכת
                 </Button>
                 
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href="/signup">
-                    <UserPlus className="ml-2" />
-                    יצירת משתמש חדש
-                  </Link>
-                </Button>
+                <div className="text-center text-sm">
+                    <span className="text-slate-400">אין לך חטיבה? </span>
+                    <Button variant="link" className="p-0 text-blue-400" asChild>
+                        <Link href="/signup">
+                            צור חטיבה חדשה
+                        </Link>
+                    </Button>
+                </div>
             </div>
         </form>
         <div className="mt-8 pt-6 border-t border-slate-700 text-center text-xs text-slate-400">
@@ -158,5 +132,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
