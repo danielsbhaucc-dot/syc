@@ -8,6 +8,10 @@ function initializeFirebaseAdmin() {
     if (admin.apps.length > 0) {
         return admin.app();
     }
+    
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is not set in environment variables.');
+    }
 
     try {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
@@ -21,14 +25,14 @@ function initializeFirebaseAdmin() {
     }
 }
 
-// Initialize it once when the module is loaded
-const adminApp = initializeFirebaseAdmin();
-const adminAuth = admin.auth(adminApp);
-const adminFirestore = admin.firestore(adminApp);
-
 
 export async function POST(req: NextRequest) {
     try {
+        // Initialize it once when the module is loaded
+        const adminApp = initializeFirebaseAdmin();
+        const adminAuth = admin.auth(adminApp);
+        const adminFirestore = admin.firestore(adminApp);
+
         const { email, password, brigadeId, battalionId } = await req.json();
 
         // Basic validation
@@ -76,7 +80,11 @@ export async function POST(req: NextRequest) {
         } else if (error.code === 'auth/invalid-password') {
             errorMessage = 'The password must be a string with at least six characters.';
             statusCode = 400;
+        } else if (error.message.includes('FIREBASE_SERVICE_ACCOUNT_KEY')) {
+            errorMessage = 'Server configuration error. Service account key is not set up.';
+            statusCode = 500;
         }
+
 
         return NextResponse.json({ error: errorMessage, details: error.message }, { status: statusCode });
     }
