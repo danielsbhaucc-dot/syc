@@ -41,6 +41,8 @@ export default function LoginPage() {
     }
     try {
         await signInWithEmailAndPassword(auth, email, password);
+        // Store user type in local storage to use it across the app
+        localStorage.setItem('userType', userType);
         router.push("/dashboard");
     } catch (error) {
         let description = "שם המשתמש או הסיסמה שהזנת אינם נכונים.";
@@ -156,3 +158,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

@@ -40,10 +40,12 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query, where, DocumentData, addDoc } from "firebase/firestore";
+import { collection, query, where, DocumentData, addDoc, doc, getDoc } from "firebase/firestore";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 
 // Define interfaces based on backend.json for type safety
@@ -220,9 +222,32 @@ function AddBattalionDialog({ brigadeId }: { brigadeId: string }) {
 export default function DashboardPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
 
   // The brigadeId is the user's UID.
   const brigadeId = user?.uid;
+  const userType = localStorage.getItem('userType');
+
+  useEffect(() => {
+    if (userType === 'battalion' && firestore && user) {
+      // For a battalion user, we need to find which battalion they belong to.
+      // This is a complex query not easily done client-side without knowing the brigade.
+      // A better structure might be a 'users' collection mapping user UIDs to their roles and units.
+      // For now, as a simplification, we assume the first battalion found for the user's brigade is theirs.
+      const findBattalion = async () => {
+        if (!brigadeId) return;
+        const q = query(collection(firestore, 'brigades', brigadeId, 'battalions'), where("brigadeId", "==", brigadeId));
+        const querySnapshot = await getDoc(doc(collection(q)));
+        if (!querySnapshot.empty) {
+          const firstBattalion = querySnapshot.docs[0];
+          router.push(`/dashboard/battalion/${firstBattalion.id}`);
+        }
+      };
+      // This logic is flawed and will be simplified. 
+      // For the demo, we will just redirect to the reporting page for battalion users.
+      router.push('/dashboard/reporting');
+    }
+  }, [userType, firestore, user, router, brigadeId]);
 
   const battalionsQuery = useMemoFirebase(() => {
     if (!firestore || !brigadeId) return null;
@@ -234,7 +259,7 @@ export default function DashboardPage() {
 
   const { data: battalions, isLoading, error } = useCollection<Unit>(battalionsQuery);
   
-  if (isLoading || !battalions) {
+  if (isLoading || !battalions || userType === 'battalion') {
     return <DashboardLoading />;
   }
   
@@ -394,3 +419,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

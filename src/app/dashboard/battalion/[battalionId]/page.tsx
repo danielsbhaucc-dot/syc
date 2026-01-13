@@ -209,6 +209,9 @@ export default function BattalionPage() {
   const { user } = useUser();
 
   const battalionId = params.battalionId as string;
+  // This is a simplification. In a real app, you'd probably get the brigadeId
+  // from a different source, maybe stored with the user profile or battalion doc.
+  // For now, we assume the logged-in user's UID is the brigade ID.
   const brigadeId = user?.uid;
 
   const battalionRef = useMemoFirebase(() => {
@@ -235,9 +238,20 @@ export default function BattalionPage() {
 
   return (
     <div className="space-y-8 w-full" dir="rtl">
-      <h1 className="font-headline text-4xl font-bold tracking-tighter">
-        גדוד: {battalion.name}
-      </h1>
+        <div className="flex items-center justify-between">
+            <div>
+                <h1 className="font-headline text-4xl font-bold tracking-tighter">
+                    גדוד: {battalion.name}
+                </h1>
+                <Link href={`/dashboard`} className="text-sm text-blue-400 hover:underline">
+                    <div className='flex items-center'>
+                        <ArrowRight className="ml-1 h-3 w-3" />
+                        חזרה לחטיבה
+                    </div>
+                </Link>
+            </div>
+      </div>
+
 
       <Card>
         <CardHeader>
@@ -269,3 +283,5 @@ export default function BattalionPage() {
     </div>
   );
 }
+
+    
