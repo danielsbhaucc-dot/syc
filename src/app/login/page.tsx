@@ -88,7 +88,7 @@ export default function LoginPage() {
       <div className="bg-slate-800/90 backdrop-blur-lg border border-slate-700 rounded-2xl shadow-2xl p-8 md:p-12 max-w-md w-full">
         <div className="text-center mb-8">
             <Shield className="w-20 h-20 mx-auto text-blue-500 mb-4" />
-            <h1 className="text-4xl font-black text-white mb-2 font-headline tracking-tighter">מערכת שליטה מחלקתית</h1>
+            <h1 className="text-4xl font-black text-white mb-2 font-headline tracking-tighter">מערכת שליטה ודיווח</h1>
             <p className="text-slate-400 font-semibold">מערכת לניהול ומעקב אחר פערים</p>
         </div>
 
@@ -131,22 +131,26 @@ export default function LoginPage() {
                     {isSubmitting ? 'מתחבר...' : 'כניסה למערכת'}
                 </Button>
                 
-                <div className="text-center text-sm">
-                    <span className="text-slate-400">אין לך חטיבה? </span>
-                    <Button variant="link" className="p-0 text-blue-400" asChild>
-                        <Link href="/signup">
-                            צור חטיבה חדשה
-                        </Link>
-                    </Button>
-                </div>
             </div>
         </form>
-        <div className="mt-8 pt-6 border-t border-slate-700 text-center text-xs text-slate-400">
-            <p>מערכת למעקב אחר פערי כוח אדם, הסמכה ואמצעים</p>
+        <div className="mt-8 pt-6 border-t border-slate-700 text-center text-xs text-slate-400 space-y-4">
+            <div>
+                <h4 className="font-bold text-slate-300">משתמשי גדוד:</h4>
+                <p>יש להתחבר עם האימייל והסיסמה שנוצרו עבורכם על ידי מנהל החטיבה.</p>
+            </div>
+             <div>
+                <h4 className="font-bold text-slate-300">מנהלי חטיבה:</h4>
+                <p>
+                    אין לכם עדיין חשבון?{' '}
+                    <Button variant="link" className="p-0 text-blue-400" asChild>
+                        <Link href="/signup">
+                            צרו חטיבה חדשה
+                        </Link>
+                    </Button>
+                </p>
+            </div>
         </div>
       </div>
     </div>
   );
 }
-
-    
