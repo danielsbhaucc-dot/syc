@@ -1,17 +1,25 @@
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
-export default {
+const config: Config = {
   darkMode: ['class'],
   content: [
+    './src/**/*.{js,ts,jsx,tsx,mdx}', // This path covers all files in the src directory
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
     extend: {
       fontFamily: {
         body: ['Assistant', 'sans-serif'],
-        headline: ['Space Grotesk', 'sans-serif'],
+        headline: ['Assistant', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -45,6 +53,14 @@ export default {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--foreground))',
+        },
+        warning: {
+            DEFAULT: 'hsl(var(--warning))',
+            foreground: 'hsl(var(--foreground))',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -74,18 +90,18 @@ export default {
       keyframes: {
         'accordion-down': {
           from: {
-            height: '0',
+            height: '0'
           },
           to: {
-            height: 'var(--radix-accordion-content-height)',
+            height: 'var(--radix-accordion-content-height)'
           },
         },
         'accordion-up': {
           from: {
-            height: 'var(--radix-accordion-content-height)',
+            height: 'var(--radix-accordion-content-height)'
           },
           to: {
-            height: '0',
+            height: '0'
           },
         },
       },
@@ -96,4 +112,6 @@ export default {
     },
   },
   plugins: [require('tailwindcss-animate')],
-} satisfies Config;
+};
+
+export default config;

@@ -2,80 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: "Assistant", sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
+    --background: 220 40% 5%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217.2 91.2% 59.8%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 222.2 84% 6.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217.2 91.2% 59.8%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217.2 32.6% 22.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --muted: 220 30% 15%;
+    --muted-foreground: 215 20% 70%;
+
+    --popover: 220 40% 5%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
+
+    --card: 220 40% 10%;
+    --card-foreground: 210 40% 98%;
+
+    --border: 220 30% 20%;
+    --input: 220 30% 20%;
+
+    --primary: 210 100% 50%; /* Bright Blue */
     --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
+
+    --secondary: 220 30% 15%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    
+    --accent: 210 100% 50%; /* Bright Blue */
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217.2 91.2% 59.8%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 222.2 84% 6.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217.2 91.2% 59.8%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217.2 32.6% 22.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --success: 142 71% 45%; /* Green */
+    --warning: 45 93% 47%;  /* Yellow */
+
+    --ring: 210 100% 50%;
+    --radius: 0.75rem;
   }
 }
 
@@ -89,16 +49,42 @@ body {
 }
 
 @layer utilities {
-  .login-bg {
-    background-color: hsl(var(--background));
-    background-image:
-      radial-gradient(circle at 25px 25px, hsl(var(--border) / 0.1) 2%, transparent 0%),
-      radial-gradient(circle at 75px 75px, hsl(var(--border) / 0.1) 2%, transparent 0%);
-    background-size: 100px 100px;
+  .font-headline {
+    font-family: 'Assistant', sans-serif;
+    font-weight: 700;
   }
-}
+  
+  .bg-gradient-header {
+    background-image: linear-gradient(to bottom, hsl(var(--background)), hsl(var(--background) / 0.8));
+  }
 
-@layer utilities {
+  .card-glow-primary {
+     border: 1px solid hsl(var(--primary) / 0.2);
+     background: radial-gradient(circle at 100% 100%, hsl(var(--primary) / 0.1), transparent 40%),
+                 radial-gradient(circle at 0% 0%, hsl(var(--primary) / 0.1), transparent 40%),
+                 hsl(var(--card));
+  }
+  .card-glow-success {
+     border: 1px solid hsl(var(--success) / 0.2);
+     background: radial-gradient(circle at 100% 100%, hsl(var(--success) / 0.1), transparent 40%),
+                 radial-gradient(circle at 0% 0%, hsl(var(--success) / 0.1), transparent 40%),
+                 hsl(var(--card));
+  }
+  .card-glow-destructive {
+     border: 1px solid hsl(var(--destructive) / 0.2);
+     background: radial-gradient(circle at 100% 100%, hsl(var(--destructive) / 0.1), transparent 40%),
+                 radial-gradient(circle at 0% 0%, hsl(var(--destructive) / 0.1), transparent 40%),
+                 hsl(var(--card));
+  }
+
+  .login-bg {
+    background-color: #020617;
+    background-image:
+      radial-gradient(at 20% 80%, hsla(210, 100%, 50%, 0.15) 0px, transparent 50%),
+      radial-gradient(at 80% 20%, hsla(220, 100%, 60%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, hsla(200, 80%, 50%, 0.05) 0px, transparent 50%);
+  }
+
   .scanline {
     position: absolute;
     top: 0;
@@ -107,41 +93,55 @@ body {
     bottom: 0;
     background: linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0),
-      rgba(255, 255, 255, 0) 50%,
-      rgba(0, 0, 0, 0.2) 70%,
-      rgba(255, 255, 255, 0.1)
+      transparent,
+      transparent 98%,
+      hsla(210, 100%, 50%, 0.2) 99%,
+      transparent
     );
-    background-size: 100% 4px;
+    background-size: 100% 6px;
     animation: scan 10s linear infinite;
     pointer-events: none;
-    opacity: 0.3;
+    opacity: 0.7;
   }
 
   @keyframes scan {
-    0% { background-position: 0 0; }
-    100% { background-position: 0 100vh; }
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 0 100vh;
+    }
   }
 
   .glow {
-    animation: glow-pulse 2.5s infinite;
+    filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.8));
+    animation: glow-pulse 3s infinite ease-in-out;
   }
 
   @keyframes glow-pulse {
     0%, 100% {
-      filter: drop-shadow(0 0 5px hsl(var(--primary) / 0.5));
+      filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.6));
     }
     50% {
-      filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.8));
+      filter: drop-shadow(0 0 30px hsl(var(--primary) / 0.9));
     }
   }
 
   .loading-bar-inner {
-    animation: loading-fill 3s ease-out forwards;
+    animation: loading-bar 2s ease-in-out infinite;
   }
-  
-  @keyframes loading-fill {
-    from { width: 0%; }
-    to { width: 100%; }
+
+  @keyframes loading-bar {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(100%);
+      opacity: 0.5;
+    }
   }
 }

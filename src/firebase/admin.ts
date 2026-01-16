@@ -8,13 +8,20 @@ try {
   const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
   if (!serviceAccountString) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable not found.');
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please check your .env.local file.');
   }
 
   if (admin.apps.length === 0) {
-    // The service account key from the environment variable might have escaped newlines.
-    // We need to replace them with actual newline characters for JSON.parse to work correctly.
-    const serviceAccount = JSON.parse(serviceAccountString.replace(/\\n/g, '\n'));
+    let serviceAccount;
+    try {
+      // The service account key from the environment variable might have escaped newlines or be improperly quoted.
+      const sanitizedKey = serviceAccountString.replace(/\\n/g, '\n');
+      serviceAccount = JSON.parse(sanitizedKey);
+    } catch (e: any) {
+      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY JSON.", e.message);
+      console.error("Please ensure the FIREBASE_SERVICE_ACCOUNT_KEY in your .env.local file is a valid, single-line JSON string without extra characters, or is properly quoted if it's multi-line.");
+      throw new Error("Invalid FIREBASE_SERVICE_ACCOUNT_KEY format.");
+    }
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
