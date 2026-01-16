@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Home, LayoutTemplate, FileText, FileOutput, Menu, X, ChevronsRight, ChevronsLeft, Settings, User as UserIcon, LogOut } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useUser, useAuth } from "@/firebase";

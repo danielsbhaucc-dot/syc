@@ -33,6 +33,80 @@ interface Template {
     name: string;
 }
 
+function AddBattalionUserDialog({ brigadeId, battalionId, battalionName }: { brigadeId: string, battalionId: string, battalionName: string }) {
+    const [open, setOpen] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email || !password) {
+            toast({ variant: "destructive", title: "שגיאה", description: "יש למלא אימייל וסיסמה." });
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            const response = await fetch('/api/create-user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password, battalionId, brigadeId }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'אירעה שגיאה ביצירת המשתמש.');
+            }
+
+            toast({ title: "הצלחה", description: `משתמש נוצר בהצלחה עבור ${battalionName}.` });
+            setEmail("");
+            setPassword("");
+            setOpen(false);
+        } catch (error: any) {
+            console.error("Error creating battalion user:", error);
+            toast({ variant: "destructive", title: "שגיאה", description: error.message || "אירעה שגיאה ביצירת המשתמש." });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                 <Button variant="outline">
+                    <UserPlus className="ml-2 h-4 w-4" />
+                    הוסף משתמש לגדוד
+                </Button>
+            </DialogTrigger>
+            <DialogContent dir="rtl">
+                <DialogHeader>
+                    <DialogTitle className="font-headline text-2xl">יצירת משתמש חדש לגדוד</DialogTitle>
+                    <DialogDescription>המשתמש שייוצר יקבל גישה לניהול הנתונים של גדוד \"{battalionName}\" בלבד.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                    <div>
+                        <Label htmlFor="email">אימייל</Label>
+                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" />
+                    </div>
+                    <div>
+                        <Label htmlFor="password">סיסמה</Label>
+                        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="סיסמה חזקה" />
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit" disabled={isSubmitting} className="w-full">
+                            {isSubmitting ? <Loader className="animate-spin h-5 w-5 mx-auto" /> : 'צור משתמש'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function AddCompanyDialog({ brigadeId, battalionId }: { brigadeId: string; battalionId: string }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -69,7 +143,7 @@ function AddCompanyDialog({ brigadeId, battalionId }: { brigadeId: string; batta
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <PlusCircle className="ml-2" />
+          <PlusCircle className="ml-2 h-4 w-4" />
           הוסף פלוגה
         </Button>
       </DialogTrigger>
@@ -97,7 +171,7 @@ function AddCompanyDialog({ brigadeId, battalionId }: { brigadeId: string; batta
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader className="animate-spin ml-2" /> : null}
+              {isSubmitting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : null}
               {isSubmitting ? 'מוסיף...' : 'הוסף פלוגה'}
             </Button>
           </DialogFooter>
@@ -165,7 +239,7 @@ function CompaniesList({ brigadeId, battalionId }: { brigadeId: string; battalio
                     <p className="max-w-md mb-6">
                         התחל על ידי הוספת הפלוגה הראשונה לגדוד.
                     </p>
-                    <AddCompanyDialog brigadeId={brigadeId} battalionId={battalionId} />
+                    {brigadeId && battalionId && <AddCompanyDialog brigadeId={brigadeId} battalionId={battalionId} />}
                 </div>
             )}
         </>
@@ -209,10 +283,11 @@ function AssignTemplateCard({ brigadeId, battalionId, currentTemplateId }: { bri
         <Card>
             <CardHeader>
                 <CardTitle>שיוך תבנית תקן</CardTitle>
+                 <CardDescription>שיוך תבנית יגדיר את תקן כוח האדם והציוד עבור הגדוד.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 {currentTemplateId && (
-                    <div className="text-sm p-3 bg-green-900/50 border border-green-700 rounded-md">
+                    <div className="text-sm p-3 bg-success/10 border border-success/20 rounded-md">
                         <p className="font-semibold text-green-300">תבנית משויכת כעת: <span className="font-bold">{selectedTemplateName || 'טוען...'}</span></p>
                     </div>
                 )}
@@ -230,13 +305,10 @@ function AssignTemplateCard({ brigadeId, battalionId, currentTemplateId }: { bri
                         </SelectContent>
                     </Select>
                     <Button onClick={handleAssign} disabled={isSubmitting || !selectedTemplateId}>
-                        {isSubmitting ? <Loader className="animate-spin ml-2" /> : <FileText />}
-                        {isSubmitting ? "משייך..." : (currentTemplateId ? "שנה שיוך" : "שייך תבנית")}
+                        {isSubmitting ? <Loader className="animate-spin h-5 w-5" /> : <FileText  className="ml-2 h-4 w-4" />}
+                        {isSubmitting ? "..." : (currentTemplateId ? "שנה שיוך" : "שייך תבנית")}
                     </Button>
                 </div>
-                 <p className="text-xs text-muted-foreground">
-                    שיוך תבנית יגדיר את תקן כוח האדם והציוד עבור הגדוד. משתמש הגדוד יצטרך למלא את הנתונים בהתאם לתבנית זו.
-                </p>
             </CardContent>
         </Card>
     )
@@ -245,35 +317,12 @@ function AssignTemplateCard({ brigadeId, battalionId, currentTemplateId }: { bri
 function BattalionLoading() {
     return (
         <div className="space-y-6" dir="rtl">
-            <Skeleton className="h-9 w-64" />
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-7 w-48" />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <Skeleton className="h-6 w-6" />
-                        <Skeleton className="h-5 w-40" />
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Skeleton className="h-6 w-6" />
-                        <Skeleton className="h-5 w-32" />
-                    </div>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>פלוגות</CardTitle>
-                </CardHeader>
-                <CardContent>
-                     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-12 border-2 border-dashed rounded-lg">
-                        <Loader className="w-16 h-16 mb-4 animate-spin" />
-                        <h3 className="text-xl font-semibold text-foreground mb-2">
-                            טוען נתונים...
-                        </h3>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-10 w-2/3" />
+                <Skeleton className="h-10 w-36" />
+            </div>
+             <Skeleton className="h-32 w-full" />
+             <Skeleton className="h-64 w-full" />
         </div>
     )
 }
@@ -316,8 +365,8 @@ export default function BattalionPage() {
 
   if (error) {
     return (
-      <div className="text-red-500 text-center" dir="rtl">
-          <ShieldAlert className="mx-auto h-12 w-12 mb-4" />
+      <div className="text-red-500 text-center flex flex-col items-center justify-center h-full" dir="rtl">
+          <ShieldAlert className="mx-auto h-16 w-16 mb-4" />
         <h2 className="text-2xl font-bold mb-2">אירעה שגיאה</h2>
         <p>לא ניתן היה לטעון את נתוני הגדוד.</p>
         <p className="text-sm mt-2">{error.message}</p>
@@ -329,39 +378,24 @@ export default function BattalionPage() {
 
   return (
     <div className="space-y-8 w-full" dir="rtl">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <h1 className="font-headline text-4xl font-bold tracking-tighter">
-                    גדוד: {battalion.name}
+                <h1 className="font-headline text-4xl font-extrabold tracking-tight">
+                    ניהול גדוד: {battalion.name}
                 </h1>
                  {isBrigadeAdmin && (
-                    <Link href={`/dashboard`} className="text-sm text-blue-400 hover:underline">
+                    <Link href={`/dashboard`} className="text-sm text-primary hover:underline">
                         <div className='flex items-center'>
                             <ArrowRight className="ml-1 h-3 w-3" />
-                            חזרה לחטיבה
+                            חזרה לסקירת חטיבה
                         </div>
                     </Link>
                 )}
             </div>
+            {isBrigadeAdmin && brigadeId && (
+                <AddBattalionUserDialog brigadeId={brigadeId} battalionId={battalionId} battalionName={battalion.name} />
+            )}
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>פרטי הגדוד</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-lg">
-          <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-muted-foreground" />
-            <span className="font-medium">שם:</span>
-            <span>{battalion.name}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <MapPin className="h-6 w-6 text-muted-foreground" />
-            <span className="font-medium">מיקום:</span>
-            <span>{battalion.location}</span>
-          </div>
-        </CardContent>
-      </Card>
 
       {isBrigadeAdmin && (
         <AssignTemplateCard brigadeId={brigadeId} battalionId={battalionId} currentTemplateId={battalion.templateId} />
@@ -369,8 +403,11 @@ export default function BattalionPage() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>פלוגות הגדוד</CardTitle>
-            <AddCompanyDialog brigadeId={brigadeId} battalionId={battalionId} />
+            <div>
+                <CardTitle className="font-headline text-2xl">פלוגות הגדוד</CardTitle>
+                <CardDescription>ניהול הפלוגות המשויכות לגדוד.</CardDescription>
+            </div>
+             {isBrigadeAdmin && brigadeId && <AddCompanyDialog brigadeId={brigadeId} battalionId={battalionId} />}
         </CardHeader>
         <CardContent>
             <CompaniesList brigadeId={brigadeId} battalionId={battalionId} />
