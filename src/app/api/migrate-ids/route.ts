@@ -1,10 +1,17 @@
 
 // src/app/api/migrate-ids/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { adminFirestore } from '@/firebase/admin'; // Using the project's admin SDK instance
+import { getAdminFirestore, isAdminConfigured } from '@/firebase/admin';
 
 export async function GET(req: NextRequest) {
-  const firestore = adminFirestore;
+  if (!isAdminConfigured()) {
+    return NextResponse.json(
+      { message: 'Migration failed', error: 'FIREBASE_SERVICE_ACCOUNT_KEY is not configured.' },
+      { status: 500 }
+    );
+  }
+
+  const firestore = getAdminFirestore();
   let battalionsUpdated = 0;
   let brigadesScanned = 0;
   let totalBattalionsScanned = 0;

@@ -1,34 +1,50 @@
 import * as admin from 'firebase-admin';
+import type { Auth } from 'firebase-admin/auth';
+import type { Firestore } from 'firebase-admin/firestore';
 
-// Check if the service account key is available
-const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-if (!serviceAccountKey) {
-  throw new Error('CRITICAL: FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Server functionality will be disabled.');
-}
+let initialized = false;
 
-let serviceAccount;
-try {
-  serviceAccount = JSON.parse(serviceAccountKey);
-} catch (e) {
-  throw new Error('CRITICAL: FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. Please check the environment variable.');
-}
+function ensureInitialized(): void {
+  if (initialized) {
+    return;
+  }
 
-// Initialize Firebase Admin SDK only once
-if (!admin.apps.length) {
+  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (!serviceAccountKey) {
+    throw new Error(
+      'CRITICAL: FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Server functionality will be disabled.'
+    );
+  }
+
+  let serviceAccount;
   try {
+    serviceAccount = JSON.parse(serviceAccountKey);
+  } catch {
+    throw new Error(
+      'CRITICAL: FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. Please check the environment variable.'
+    );
+  }
+
+  if (!admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
     console.log('Firebase Admin SDK initialized successfully.');
-  } catch (error: any) {
-    console.error('CRITICAL: Failed to initialize Firebase Admin SDK:', error);
-    // Re-throw the error to stop the application from starting in a broken state.
-    throw error;
   }
+
+  initialized = true;
 }
 
-// Export initialized services. These are now guaranteed to be non-null if the app starts.
-const adminAuth = admin.auth();
-const adminFirestore = admin.firestore();
+export function isAdminConfigured(): boolean {
+  return Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+}
 
-export { adminAuth, adminFirestore };
+export function getAdminAuth(): Auth {
+  ensureInitialized();
+  return admin.auth();
+}
+
+export function getAdminFirestore(): Firestore {
+  ensureInitialized();
+  return admin.firestore();
+}

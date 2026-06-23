@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminFirestore } from '@/firebase/admin';
+import { getAdminAuth, getAdminFirestore, isAdminConfigured } from '@/firebase/admin';
 
 export async function POST(req: NextRequest) {
     console.log('API Route /api/create-user POST function entered.'); // Added console.log here
     try { // Outer try block starts here
-        if (!adminAuth || !adminFirestore) {
+        if (!isAdminConfigured()) {
             const errorMessage = 'Server configuration error. Firebase Admin SDK not initialized. Is FIREBASE_SERVICE_ACCOUNT_KEY set in .env.local?';
             console.error(errorMessage);
             return NextResponse.json({ error: errorMessage }, { status: 500 });
         }
+
+        const adminAuth = getAdminAuth();
+        const adminFirestore = getAdminFirestore();
 
         try {
             const body = await req.json();

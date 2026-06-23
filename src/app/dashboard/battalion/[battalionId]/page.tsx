@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { FileText, Users, Building, Shield, PlusCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { adminFirestore as firestore } from "@/firebase/admin";
+import { getAdminFirestore } from "@/firebase/admin";
 
 // Defines the structure for data fetched from Firestore
 interface Company {
@@ -21,6 +21,7 @@ interface Battalion {
 // Query the collection group by a dedicated 'id' field. This is standard practice.
 async function getBattalionData(battalionId: string): Promise<Battalion | null> {
     try {
+        const firestore = getAdminFirestore();
         const battalionsGroup = firestore.collectionGroup('battalions');
         const q = battalionsGroup.where('id', '==', battalionId).limit(1);
         const querySnapshot = await q.get();

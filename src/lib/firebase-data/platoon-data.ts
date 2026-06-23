@@ -1,30 +1,26 @@
-
-import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
-import { firestore } from '@/firebase/config'; // Assuming you have a file that exports the firestore instance
+import { getAdminFirestore } from '@/firebase/admin';
 import { Platoon, Squad, Soldier } from '@/types/platoon';
 
-// Function to fetch platoon data
 export async function getPlatoonData(platoonId: string): Promise<Platoon | null> {
   try {
-    const platoonRef = doc(firestore, 'platoons', platoonId);
-    const platoonSnap = await getDoc(platoonRef);
+    const firestore = getAdminFirestore();
+    const platoonRef = firestore.collection('platoons').doc(platoonId);
+    const platoonSnap = await platoonRef.get();
 
-    if (!platoonSnap.exists()) {
+    if (!platoonSnap.exists) {
       console.log('No such platoon!');
       return null;
     }
 
     const platoonData = platoonSnap.data() as Omit<Platoon, 'id' | 'squads'>;
 
-    const squadsRef = collection(platoonRef, 'squads');
-    const squadsSnap = await getDocs(squadsRef);
+    const squadsSnap = await platoonRef.collection('squads').get();
 
     const squads: Squad[] = await Promise.all(
       squadsSnap.docs.map(async (squadDoc) => {
         const squadData = squadDoc.data() as Omit<Squad, 'id' | 'soldiers'>;
 
-        const soldiersRef = collection(squadDoc.ref, 'soldiers');
-        const soldiersSnap = await getDocs(soldiersRef);
+        const soldiersSnap = await squadDoc.ref.collection('soldiers').get();
 
         const soldiers: Soldier[] = soldiersSnap.docs.map((soldierDoc) => ({
           ...(soldierDoc.data() as Omit<Soldier, 'id'>),
