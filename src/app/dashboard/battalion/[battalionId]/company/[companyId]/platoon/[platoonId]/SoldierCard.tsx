@@ -1,76 +1,104 @@
-'use client';
-import type { Soldier } from './SquadCard';
-import { Badge } from '@/components/ui/badge';
-import {
-    User,
-    UserCircle,
-    Shield,
-    Crosshair,
-    PlusCircle,
-    Bomb,
-    RadioTower,
-    PersonStanding,
-    Sword,
-    Package,
-    HeartPulse,
-    UserCog,
-} from 'lucide-react';
 
-const roleIcons: { [key: string]: React.ReactNode } = {
-    'מפקד': <UserCircle className="text-yellow-400" />,
-    'מ"כ': <UserCircle className="text-yellow-400" />,
-    'סמל': <Shield className="text-blue-400" />,
-    'נגביסט': <Sword className="text-emerald-400" />,
-    'חובש': <HeartPulse className="text-red-400" />,
-    'קלע': <Crosshair className="text-green-400" />,
-    'חבלן': <Bomb className="text-orange-400" />,
-    'קשר': <RadioTower className="text-blue-400" />,
-    'מע"ר': <HeartPulse className="text-red-400" />,
-    'רובאי': <PersonStanding className="text-slate-400" />,
-    'מוביל': <PersonStanding className="text-blue-400" />,
-    default: <User className="text-slate-400" />,
-};
+import { cva, VariantProps } from 'class-variance-authority';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-const getRoleIcon = (role: string) => {
-    const roleKey = Object.keys(roleIcons).find(key => role.toLowerCase().includes(key));
-    return roleKey ? roleIcons[roleKey] : roleIcons.default;
-};
-
-const EquipmentPill = ({ item }: { item: string }) => (
-    <span className="bg-[#1e293b] border border-[#475569] text-[#cbd5e1] text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap">
-        {item}
-    </span>
+const cardVariants = cva(
+  'soldier-card flex flex-col items-center min-h-[220px] bg-slate-900/50 border rounded-lg p-3 relative transition-all duration-300 ease-in-out hover:transform hover:-translate-y-1 hover:shadow-lg',
+  {
+    variants: {
+      theme: {
+        default: 'border-slate-700 hover:border-blue-500',
+        blue: 'border-blue-800 hover:border-blue-500',
+        green: 'border-green-800 hover:border-green-500',
+        orange: 'border-orange-800 hover:border-orange-500',
+        red: 'border-red-800 hover:border-red-500',
+      },
+      hasGap: {
+        true: 'border-dashed !border-red-500 bg-red-900/20',
+        false: '',
+      }
+    },
+    defaultVariants: {
+      theme: 'default',
+      hasGap: false
+    },
+  }
 );
 
-export function SoldierCard({ soldier }: { soldier: Soldier }) {
-    const hasGap = soldier.gap && soldier.gap.length > 0;
+const roleTextVariants = cva('font-headline text-base text-center leading-tight', {
+    variants: {
+      theme: {
+        default: 'text-slate-300',
+        blue: 'text-blue-400',
+        green: 'text-green-400',
+        orange: 'text-orange-400',
+        red: 'text-red-400',
+      }
+    },
+    defaultVariants: {
+        theme: 'default'
+    }
+})
+
+const iconVariants = cva('text-3xl mb-2', {
+    variants: {
+      theme: {
+        default: 'text-slate-400',
+        blue: 'text-blue-500',
+        green: 'text-green-500',
+        orange: 'text-orange-500',
+        red: 'text-red-500',
+      }
+    },
+    defaultVariants: {
+        theme: 'default'
+    }
+})
+
+
+export interface Soldier {
+    id: string;
+    name: string;
+    role: string;
+    number: number;
+    equipment: {
+        assigned: string[];
+        required: string[];
+        gaps: string[];
+    };
+    icon: IconDefinition;
+    theme: VariantProps<typeof cardVariants>['theme'];
+}
+
+interface SoldierCardProps extends VariantProps<typeof cardVariants> {
+  soldier: Soldier;
+}
+
+export function SoldierCard({ soldier }: SoldierCardProps) {
+    const hasGap = soldier.equipment.gaps.length > 0;
 
     return (
-        <div className={`relative flex min-h-[240px] flex-col items-center rounded-xl border bg-background p-3 text-center shadow-lg transition-all hover:-translate-y-1 hover:border-primary/80 ${hasGap ? 'border-red-500/50 bg-red-900/20' : 'border-slate-700'}`}>
-            <div className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md bg-slate-700 text-xs font-bold border border-slate-600">
-                {soldier.positionInTeam || '?'}
+        <div className={cardVariants({ theme: soldier.theme, hasGap })}>
+            <div className="soldier-num absolute top-2 right-2 bg-slate-700 text-white w-6 h-6 rounded-md flex items-center justify-center font-bold text-xs border border-slate-600">
+                {soldier.number}
             </div>
+            <FontAwesomeIcon icon={soldier.icon} className={iconVariants({ theme: soldier.theme })} />
             
-            <div className="mt-6 flex-shrink-0 size-10 flex items-center justify-center">
-                {getRoleIcon(soldier.role)}
+            <div className={roleTextVariants({ theme: soldier.theme })}>{soldier.role}</div>
+            <div className="name-text text-slate-400 text-sm font-semibold mb-2">{soldier.name}</div>
+
+            <div className="equipment-grid flex flex-wrap gap-1 justify-center w-full mt-auto">
+                {soldier.equipment.assigned.map(item => (
+                    <span key={item} className="eq-pill bg-slate-800 border border-slate-700 text-slate-300 text-xs px-2 py-0.5 rounded-full font-medium">
+                        {item}
+                    </span>
+                ))}
             </div>
 
-            <div className="mt-2 flex-grow">
-                <p className="font-extrabold text-base leading-tight">{soldier.role}</p>
-                <p className="text-sm text-muted-foreground font-semibold">{soldier.name}</p>
-            </div>
-
-            {soldier.equipment && soldier.equipment.length > 0 && (
-                 <div className="mt-auto flex w-full flex-wrap justify-center gap-1 py-2">
-                    {soldier.equipment.map((item, i) => (
-                         <EquipmentPill key={i} item={item} />
-                    ))}
-                </div>
-            )}
-            
             {hasGap && (
-                 <div className="mt-2 w-full rounded-md border border-red-500/50 bg-red-900/30 px-2 py-1 text-xs font-bold text-red-400 animate-pulse">
-                    {soldier.gap}
+                <div className="gap-alert-box mt-2 bg-red-900/50 border border-red-700 text-red-300 text-xs p-1.5 w-full text-center rounded-md font-bold">
+                    <p>פערים: {soldier.equipment.gaps.join(', ')}</p>
                 </div>
             )}
         </div>

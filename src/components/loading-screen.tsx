@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Shield } from 'lucide-react';
@@ -28,7 +29,7 @@ export function LoadingScreen() {
     <div className="flex min-h-screen w-full flex-col items-center justify-center login-bg" dir="rtl">
       <div className="relative flex flex-col items-center justify-center">
         <div className="scanline"></div>
-        <Shield className="w-24 h-24 text-blue-500 glow" />
+        <Shield className="w-24 h-24 text-blue-500 glow animate-pulse" />
         <h2 className="mt-6 text-xl font-semibold text-slate-300 tracking-wider transition-opacity duration-500">
             {loadingMessages[messageIndex]}
         </h2>

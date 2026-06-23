@@ -18,18 +18,19 @@ import {
 import { useAuth, useUser } from "@/firebase";
 import { LogOut, Settings, User as UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export function UserNav() {
-  const { user } = useUser();
-  const { auth } = useAuth();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth(); // Correctly get the auth instance
   const router = useRouter();
+  const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
-    await auth.signOut();
-    router.push('/login');
-  };
-
-  if (!user) return null;
+  if (!user) {
+    return null;
+  }
 
   return (
     <DropdownMenu>
@@ -64,9 +65,28 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator className="bg-white/10"/>
-        <DropdownMenuItem onSelect={handleLogout} className="cursor-pointer focus:bg-destructive/50 focus:text-white">
+        <DropdownMenuItem
+          className="cursor-pointer focus:bg-destructive/50 focus:text-white"
+          disabled={isLoggingOut || isUserLoading}
+          onClick={async () => {
+            setIsLoggingOut(true);
+            if (!auth) {
+              toast({ variant: "destructive", title: "שגיאה קריטית", description: "שירות האימות אינו זמין. נסה לרענן את העמוד." });
+              setIsLoggingOut(false);
+              return;
+            }
+            try {
+              await auth.signOut();
+              router.push('/login');
+            } catch (error) {
+              console.error("Error signing out: ", error);
+              toast({ variant: "destructive", title: "שגיאה", description: "אירעה שגיאה בזמן ההתנתקות." });
+              setIsLoggingOut(false);
+            }
+          }}
+        >
           <LogOut className="mr-2 h-4 w-4" />
-          <span>התנתקות</span>
+          {isLoggingOut ? <span>מנתק...</span> : <span>התנתקות</span>}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

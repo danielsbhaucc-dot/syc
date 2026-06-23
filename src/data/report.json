@@ -1,0 +1,54 @@
+{
+  "battalionName": "גדוד 101",
+  "companies": [
+    {
+      "id": "company-a",
+      "name": "פלוגה א'",
+      "personnel": { "present": 95, "total": 100 },
+      "equipment": [
+        { "name": "רובי M4", "required": 100, "assigned": 95, "gap": 5 },
+        { "name": "מקלעי נגב", "required": 10, "assigned": 8, "gap": 2 },
+        { "name": "כוונות M5", "required": 90, "assigned": 90, "gap": 0 }
+      ],
+      "platoons": [
+        {
+          "id": "platoon-1",
+          "name": "מחלקה 1",
+          "personnel": { "present": 28, "total": 30 },
+          "equipment": [
+            { "name": "רובי M4", "required": 30, "assigned": 28, "gap": 2 },
+            { "name": "מטולים", "required": 4, "assigned": 3, "gap": 1 }
+          ]
+        },
+        {
+          "id": "platoon-2",
+          "name": "מחלקה 2",
+          "personnel": { "present": 30, "total": 30 },
+          "equipment": [
+            { "name": "רובי M4", "required": 30, "assigned": 30, "gap": 0 },
+            { "name": "מקלעי נגב", "required": 3, "assigned": 3, "gap": 0 }
+          ]
+        }
+      ]
+    },
+     {
+      "id": "company-b",
+      "name": "פלוגה ב'",
+      "personnel": { "present": 88, "total": 100 },
+      "equipment": [
+        { "name": "רובי M4", "required": 100, "assigned": 88, "gap": 12 },
+        { "name": "מקלעי נגב", "required": 10, "assigned": 10, "gap": 0 }
+      ],
+      "platoons": [
+        {
+          "id": "platoon-3",
+          "name": "מחלקה 3",
+          "personnel": { "present": 25, "total": 30 },
+          "equipment": [
+            { "name": "רובי M4", "required": 30, "assigned": 25, "gap": 5 }
+          ]
+        }
+      ]
+    }
+  ]
+}

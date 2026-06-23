@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, doc, setDoc, getDoc, updateDoc, FieldValue, arrayUnion, arrayRemove } from "firebase/firestore"; // Added getDoc, updateDoc, FieldValue, arrayUnion, arrayRemove
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -27,6 +27,11 @@ interface Unit {
   personnel: { assigned: number; authorized: number };
   equipment: { onHand: number; authorized: number };
   readiness: number;
+}
+
+interface BrigadeDoc {
+  name: string;
+  members: Record<string, string>; // Map of UID to role
 }
 
 // --- Status Visuals ---
@@ -65,7 +70,10 @@ function AddBattalionDialog({ brigadeId }: { brigadeId: string }) {
         setIsSubmitting(true);
         try {
             const battalionsCollection = collection(firestore, 'brigades', brigadeId, 'battalions');
-            await addDoc(battalionsCollection, {
+            // --- FIX START ---
+            const newBattalionRef = doc(battalionsCollection); // Create a reference to get a new ID
+            await setDoc(newBattalionRef, { // Use setDoc to write the document with the ID
+                id: newBattalionRef.id, // Explicitly set the document ID in its data
                 name,
                 brigadeId,
                 status: "Nominal",
@@ -73,6 +81,7 @@ function AddBattalionDialog({ brigadeId }: { brigadeId: string }) {
                 equipment: { onHand: 0, authorized: 100 },
                 readiness: 0,
             });
+            // --- FIX END ---
             toast({ title: "הצלחה", description: "הגדוד נוסף בהצלחה." });
             setName("");
             setOpen(false);
@@ -135,6 +144,7 @@ export default function DashboardPage() {
     const [isClient, setIsClient] = useState(false);
     const [brigadeId, setBrigadeId] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const { toast } = useToast(); // Added toast hook
 
     useEffect(() => setIsClient(true), []);
 
@@ -147,13 +157,65 @@ export default function DashboardPage() {
                     router.push(`/dashboard/battalion/${claims.battalionId}`);
                 } else {
                     setUserRole(claims.role || 'admin');
-                    setBrigadeId(user.uid);
+                    setBrigadeId(user.uid); // Reverted line
                 }
             });
         } else {
             router.push('/login');
         }
     }, [user, isUserLoading, router]);
+
+    // NEW useEffect for client-side brigade membership management
+    useEffect(() => {
+        if (!user || !firestore || !brigadeId || !userRole || userRole === 'battalion') {
+            return;
+        }
+
+        const brigadeRef = doc(firestore, 'brigades', brigadeId);
+
+        const checkAndSetBrigadeMembership = async () => {
+            try {
+                const brigadeSnap = await getDoc(brigadeRef);
+
+                if (!brigadeSnap.exists()) {
+                    // Brigade does not exist, create it and add current user as admin
+                    await setDoc(brigadeRef, {
+                        name: "החטיבה שלי", // Default name for a new brigade
+                        members: {
+                            [user.uid]: 'admin'
+                        },
+                        createdAt: new Date(),
+                    });
+                    toast({
+                        title: "החטיבה נוצרה בהצלחה",
+                        description: "יצרנו עבורך חטיבה חדשה והגדרנו אותך כמנהל.",
+                    });
+                } else {
+                    // Brigade exists, check if user is a member
+                    const brigadeData = brigadeSnap.data() as BrigadeDoc;
+                    if (!brigadeData.members || !brigadeData.members[user.uid]) {
+                        // User is not in members, add them as admin
+                        await updateDoc(brigadeRef, {
+                            [`members.${user.uid}`]: 'admin'
+                        });
+                        toast({
+                            title: "הצטרפת לחטיבה בהצלחה",
+                            description: "הוגדרת כמנהל בחטיבה זו.",
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Error ensuring brigade membership:", error);
+                toast({
+                    variant: "destructive",
+                    title: "שגיאה בהגדרת הרשאות חטיבה",
+                    description: "אירעה שגיאה בבדיקת או עדכון הרשאות החטיבה שלך.",
+                });
+            }
+        };
+
+        checkAndSetBrigadeMembership();
+    }, [user, firestore, brigadeId, userRole, toast]); // Re-run when user, firestore, brigadeId, or userRole changes
 
     const battalionsQuery = useMemoFirebase(() =>
         (firestore && brigadeId) ? collection(firestore, 'brigades', brigadeId, 'battalions') : null,

@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DialogClose } from '@/components/ui/dialog'; // Import DialogClose
 
 interface Company {
   id: string;
@@ -49,7 +50,7 @@ function AddPlatoonDialog({ brigadeId, battalionId, companyId }: { brigadeId: st
       });
       toast({ title: "הצלחה", description: "המחלקה נוספה בהצלחה." });
       setName("");
-      setOpen(false);
+      setOpen(false); // Close dialog on success
     } catch (error) {
       console.error("Error adding platoon:", error);
       toast({ variant: "destructive", title: "שגיאה", description: "אירעה שגיאה בהוספת המחלקה." });
@@ -89,10 +90,13 @@ function AddPlatoonDialog({ brigadeId, battalionId, companyId }: { brigadeId: st
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader className="animate-spin ml-2" /> : null}
-              {isSubmitting ? 'מוסיף...' : 'הוסף מחלקה'}
-            </Button>
+            {/* DialogClose is now wrapped around the submit button directly */}
+            <DialogClose asChild>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader className="animate-spin ml-2" /> : null}
+                {isSubmitting ? 'מוסיף...' : 'הוסף מחלקה'}
+              </Button>
+            </DialogClose>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -136,7 +140,12 @@ function PlatoonsList({ brigadeId, battalionId, companyId }: { brigadeId: string
                     <TableBody>
                         {platoons.map((platoon) => (
                             <TableRow key={platoon.id}>
-                                <TableCell className="font-medium">{platoon.name}</TableCell>
+                                {/* Make platoon name clickable */}
+                                <TableCell className="font-medium">
+                                    <Link href={`/dashboard/battalion/${battalionId}/company/${companyId}/platoon/${platoon.id}`} className="hover:underline text-blue-600">
+                                        {platoon.name}
+                                    </Link>
+                                </TableCell>
                                 <TableCell className="text-right">
                                      <Button variant="ghost" size="sm" asChild>
                                         <Link href={`/dashboard/battalion/${battalionId}/company/${companyId}/platoon/${platoon.id}`}>
